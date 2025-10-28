@@ -44,24 +44,35 @@ jobs:
       - name: Deploy web via SSH
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "bash -se" <<REMOTE
           set -euo pipefail
+          sudo -n true >/dev/null 2>&1 || true
+          mkdir -p /srv/traum_homepage
           cd /srv/traum_homepage
-          # sync repo to latest main
           if [ -d .git ]; then
             git fetch --prune origin main
             git reset --hard origin/main
           else
-            echo "Repo not found at /srv/traum_homepage" >&2; exit 1
+            echo 'Cloning repository (first deploy)…'
+            git clone --depth=1 "$REPO_URL" .
+          fi
+          # determine compose command
+          if docker compose version >/dev/null 2>&1; then
+            DOCKER_COMPOSE="docker compose"
+          elif docker-compose version >/dev/null 2>&1; then
+            DOCKER_COMPOSE="docker-compose"
+          else
+            echo 'docker compose not found' >&2; exit 1
           fi
           # build and restart web
-          docker compose build web
-          docker compose up -d web
+          $DOCKER_COMPOSE build web
+          $DOCKER_COMPOSE up -d web
           # brief health probe
           sleep 2
           curl -sI http://127.0.0.1:17176 | sed -n '1,5p' || true
           docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1,20p'
-          REMOTE
+REMOTE
 
       - name: Notify Slack (web deploy)
         if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
