@@ -60,3 +60,19 @@ jobs:
           rsync -az --delete -e "ssh -p $DEPLOY_SSH_PORT" \
             traum_blog/public/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
 
+
+      - name: Notify Slack (blog deploy)
+        if: ${{ always() && secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,author,ref,took
+          mention_if: 'failure'
+          mention: '@channel'
+          text: |
+            Blog deploy ${{ job.status }}
+            repo=${{ github.repository }} ref=${{ github.ref_name }}
+            run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
