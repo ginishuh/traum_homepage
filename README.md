@@ -84,3 +84,15 @@ server {
 ## 주의
 - `.env`와 인증서는 커밋 금지(.gitignore 반영)
 - 컨테이너는 비루트 이미지(`nginxinc/nginx-unprivileged`) 사용, 포트는 8080 고정
+
+
+## 자동배포(웹/CD)
+홈페이지(`web`)는 main 푸시 시 자동으로 빌드·재기동됩니다.
+
+- 워크플로: `.github/workflows/deploy-web.yml`
+- 트리거: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml` 변경 또는 수동 실행
+- 동작: SSH로 VPS 접속 → `/srv/traum_homepage` 최신화 → `docker compose build web && up -d web`
+
+## 로컬 개발 팁
+- 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).
+- `blog-local`은 호스트 UID/GID 매핑 지원: `DEV_UID`, `DEV_GID`를 설정하면 루트 소유 파일을 방지합니다.
