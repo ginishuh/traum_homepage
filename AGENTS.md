@@ -80,8 +80,31 @@ Scope: Entire repository.
 
 ## Style / Git
 - Keep README accurate. Update `.env.example` when variables change.
-- Commit messages: `type(scope): subject` (e.g., `feat(blog): add search`).
 - No long-lived feature branches unless necessary.
+
+## Commit Convention (Conventional Commits)
+- Format: `type(scope)!: subject`
+  - `type`: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
+  - `scope` (common): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
+  - `subject`: imperative, concise, ≤ 72 chars, no trailing period
+- Body (optional): explain the why, notable decisions, and risks. Wrap ~72 cols.
+- Footer (optional): `Closes #123`, `Refs #456`. Use `BREAKING CHANGE:` for breaking.
+- Breaking change: add `!` after scope and a `BREAKING CHANGE:` footer describing migration.
+- Revert: `revert: <short-hash> <original subject>` and link the reason/issue.
+- Language: Prefer English imperative for consistency; Korean allowed in the body when helpful.
+
+Examples
+- `feat(blog): add hero image support`
+- `fix(oauth): handle missing code parameter (400)`
+- `docs: add OPERATIONS.md and link from README`
+- `ci(web): add deploy workflow (SSH compose build+up)`
+- `refactor(web): extract nginx headers to template`
+- `chore(deps): bump hugo base image`
+- `revert: 1a2b3c4 fix(oauth): handle missing code parameter`
+
+Granularity
+- One logical change per commit; separate refactors from behavior changes.
+- Squash before merge if PR contains fixup/cleanup commits.
 
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
