@@ -24,6 +24,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
     steps:
       - name: Checkout
@@ -80,7 +81,14 @@ jobs:
             "bash -se -c 'set -euo pipefail; \
             mkdir -p /srv/traum_homepage; \
             cd /srv/traum_homepage; \
-            if [ -d .git ]; then git fetch --prune origin main && git reset --hard origin/main; \
+            if [ -d .git ]; then \
+              echo Updating existing repo...; \
+              git remote set-url origin \"$REPO_URL\"; \
+              if ! git fetch --prune origin main; then \
+                echo Fetch without token failed, retry with token header...; \
+                git -c http.extraHeader=\"Authorization: Bearer $GITHUB_TOKEN\" fetch --prune origin main; \
+              fi; \
+              git reset --hard origin/main; \
             else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; fi; \
             if docker compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker compose\"; \
             elif docker-compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker-compose\"; \
