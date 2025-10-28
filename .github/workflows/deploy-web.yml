@@ -15,6 +15,12 @@ on:
         description: '강제로 docker compose build 실행'
         required: false
         default: 'false'
+      force_pull:
+        description: '베이스 이미지 최신화(--pull)'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: '0 3 * * 1' # 매주 월요일 03:00 UTC
 
 concurrency:
   group: deploy-web
@@ -85,13 +91,16 @@ jobs:
               NEW=\"\$(git rev-parse HEAD)\"; \
             else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; PREV=; NEW=\"\$(git rev-parse HEAD)\"; fi; \
             CHANGED=\"\$(git diff --name-only \"$PREV\" \"$NEW\" -- src Dockerfile nginx.conf docker-compose.yml 2>/dev/null || true)\"; \
-            FORCE=\"${{ (github.event_name == 'workflow_dispatch' && inputs.force_build == 'true') && '1' || '0' }}\"; \
-            echo PREV=\"$PREV\" NEW=\"$NEW\"; echo CHANGED=\"$CHANGED\"; echo FORCE_BUILD=\"$FORCE\"; \
+            FORCE=\"${{ (github.event_name == 'workflow_dispatch' && inputs.force_build == 'true') || (github.event_name == 'schedule') ? '1' : '0' }}\"; \
+            FORCE_PULL=\"${{ (github.event_name == 'workflow_dispatch' && inputs.force_pull == 'true') || (github.event_name == 'schedule') ? '1' : '0' }}\"; \
+            echo PREV=\"$PREV\" NEW=\"$NEW\"; echo CHANGED=\"$CHANGED\"; echo FORCE_BUILD=\"$FORCE\" FORCE_PULL=\"$FORCE_PULL\"; \
             if [ -z \"$PREV\" ] || [ -n \"$CHANGED\" ] || [ \"$FORCE\" = \"1\" ]; then \
               echo Running docker build...; \
               export DOCKER_BUILDKIT=1; \
-              if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then docker compose build web; \
-              elif command -v docker-compose >/dev/null 2>&1; then docker-compose build web; \
+              if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+                if [ \"$FORCE_PULL\" = \"1\" ]; then docker compose build --pull web; else docker compose build web; fi; \
+              elif command -v docker-compose >/dev/null 2>&1; then \
+                if [ \"$FORCE_PULL\" = \"1\" ]; then docker-compose build --pull web; else docker-compose build web; fi; \
               else echo docker\\ compose\\ not\\ found >&2; exit 1; fi; \
             else \
               echo No relevant changes detected; skipping docker build; \
