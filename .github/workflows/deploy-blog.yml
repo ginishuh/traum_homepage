@@ -21,7 +21,6 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
       DEST: /srv/traum_homepage/traum_blog/public/
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,17 +79,4 @@ jobs:
             traum_blog/public/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
 
 
-      - name: Notify Slack (blog deploy)
-        if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,workflow,job,commit,author,ref,took
-          mention_if: 'failure'
-          mention: '@channel'
-          text: |
-            Blog deploy ${{ job.status }}
-            repo=${{ github.repository }} ref=${{ github.ref_name }}
-            run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+      # Slack 알림 스텝 제거됨 (미사용)
