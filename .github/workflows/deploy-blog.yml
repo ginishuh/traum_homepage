@@ -53,7 +53,9 @@ jobs:
       - name: Build blog with Hugo
         working-directory: traum_blog
         run: |
+          set -euo pipefail
           hugo --minify
+          echo "\nBuilt files:" && find public -maxdepth 2 -type f | sed -n '1,50p'
 
       - name: Start ssh-agent and add key
         uses: webfactory/ssh-agent@v0.9.0
@@ -67,16 +69,12 @@ jobs:
           : "${DEPLOY_SSH_PORT:=22}"
           ssh-keyscan -p "$DEPLOY_SSH_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
-      - name: Ensure target directory exists
-        run: |
-          : "${DEPLOY_SSH_PORT:=22}"
-          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
-            'mkdir -p /srv/traum_homepage/traum_blog/public'
-
       - name: Rsync public/ to VPS
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          rsync -az --delete -e "ssh -p $DEPLOY_SSH_PORT" \
+          rsync -az --delete \
+            --rsync-path="mkdir -p '$DEST' && rsync" \
+            -e "ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=no" \
             traum_blog/public/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
 
 
