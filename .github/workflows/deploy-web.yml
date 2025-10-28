@@ -155,30 +155,20 @@ jobs:
       - name: Deploy web via SSH
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" 'bash -se' <<'REMOTE'
-          set -euo pipefail
           REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
-          mkdir -p /srv/traum_homepage
-          cd /srv/traum_homepage
-          if [ -d .git ]; then
-            git fetch --prune origin main
-            git reset --hard origin/main
-          else
-            echo 'Cloning repository (first deploy)…'
-            git clone --depth=1 "$REPO_URL" .
-          fi
-          if docker compose version >/dev/null 2>&1; then
-            DOCKER_COMPOSE="docker compose"
-          elif docker-compose version >/dev/null 2>&1; then
-            DOCKER_COMPOSE="docker-compose"
-          else
-            echo 'docker compose not found' >&2; exit 1
-          fi
-          $DOCKER_COMPOSE build web
-          $DOCKER_COMPOSE up -d web
-          sleep 2
-          curl -sI http://127.0.0.1:17176 | sed -n '1,5p' || true
-          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1,20p'
-REMOTE
+          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash -se -c 'set -euo pipefail; \
+            mkdir -p /srv/traum_homepage; \
+            cd /srv/traum_homepage; \
+            if [ -d .git ]; then git fetch --prune origin main && git reset --hard origin/main; \
+            else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; fi; \
+            if docker compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker compose\"; \
+            elif docker-compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker-compose\"; \
+            else echo docker\ compose\ not\ found >&2; exit 1; fi; \
+            $DOCKER_COMPOSE build web; \
+            $DOCKER_COMPOSE up -d web; \
+            sleep 2; \
+            curl -sI http://127.0.0.1:17176 | sed -n \"1,5p\" || true; \
+            docker ps --format \"table {{.Names}}\t{{.Image}}\t{{.Status}}\" | sed -n \"1,20p\"'"
 
       # Slack 알림 스텝 제거됨 (미사용)
