@@ -90,11 +90,13 @@ jobs:
               fi; \
               git reset --hard origin/main; \
             else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; fi; \
-            if docker compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker compose\"; \
-            elif docker-compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker-compose\"; \
-            else echo docker\ compose\ not\ found >&2; exit 1; fi; \
-            $DOCKER_COMPOSE build web; \
-            $DOCKER_COMPOSE up -d web; \
+            if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+              docker compose build web && docker compose up -d web; \
+            elif command -v docker-compose >/dev/null 2>&1; then \
+              docker-compose build web && docker-compose up -d web; \
+            else \
+              echo docker\\ compose\\ not\\ found >&2; exit 1; \
+            fi; \
             sleep 2; \
             curl -sI http://127.0.0.1:17176 | sed -n \"1,5p\" || true; \
             docker ps --format \"table {{.Names}}\t{{.Image}}\t{{.Status}}\" | sed -n \"1,20p\"'"
