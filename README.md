@@ -3,6 +3,7 @@
 정적 홈페이지(`www.trr.co.kr`)와 블로그(`blog.trr.co.kr`)를 컨테이너로 운영하는 단일 레포입니다.
 
 ## 폴더 구조
+- 운영 가이드: `docs/OPERATIONS.md`
 - `src/` — 홈페이지 정적 파일(HTML/CSS/JS)
 - `Dockerfile` — 홈페이지 빌드/런(nginx unprivileged, 8080)
 - `nginx.conf` — 보안 헤더/캐시/압축 기본 설정
