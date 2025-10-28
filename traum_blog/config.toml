@@ -1,11 +1,14 @@
 baseURL = "https://blog.trr.co.kr/"
 title = "TRR 블로그"
 languageCode = "ko-kr"
-paginate = 10
 enableRobotsTXT = true
 
+# Hugo v0.128.0+ pagination config
+[pagination]
+pagerSize = 10
+
 [outputs]
-home = ["HTML", "RSS", "JSON"]
+home = ["HTML", "RSS"]
 
 [params]
 description = "TRR 공식 블로그"
