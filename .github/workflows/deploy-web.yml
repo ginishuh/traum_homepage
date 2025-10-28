@@ -61,3 +61,18 @@ jobs:
           curl -sI http://127.0.0.1:17176 | sed -n '1,5p' || true
           docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1,20p'
           REMOTE
+
+      - name: Notify Slack (web deploy)
+        if: ${{ always() && secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,author,ref,took
+          mention_if: 'failure'
+          mention: '@channel'
+          text: |
+            Web deploy ${{ job.status }}
+            repo=${{ github.repository }} ref=${{ github.ref_name }}
+            run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
