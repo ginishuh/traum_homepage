@@ -6,6 +6,12 @@ Scope: Entire repository.
 - Keep this repo simple: static homepage + static blog with minimal infra.
 - Favor unprivileged containers and loopback binds (no public ports from Compose).
 
+## 언어 원칙
+- 모든 에이전트/도우미의 대화형 응답은 한국어로 합니다.
+- 문서는 한국어를 기본으로 작성합니다(README, OPERATIONS, 가이드 등).
+- 코드 주석은 한국어를 기본으로 하되, 표준 명칭/식별자는 원문(영문) 유지 가능합니다.
+- 외부 문서에서 가져온 고유 용어는 필요 시 영어 병기(예: Conventional Commits 타입/스코프).
+
 ## Do / Don’t
 - Do use `nginxinc/nginx-unprivileged` and expose 8080 only.
 - Do bind ports on loopback: `127.0.0.1:PORT:8080`.
@@ -80,27 +86,28 @@ Scope: Entire repository.
 
 ## Style / Git
 - Keep README accurate. Update `.env.example` when variables change.
+- 문서는 한국어 기본, 표제/파일명은 상황에 따라 영문 허용.
 - No long-lived feature branches unless necessary.
 
 ## Commit Convention (Conventional Commits)
-- Format: `type(scope)!: subject`
+- 형식: `type(scope)!: subject`
   - `type`: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
-  - `scope` (common): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
-  - `subject`: imperative, concise, ≤ 72 chars, no trailing period
-- Body (optional): explain the why, notable decisions, and risks. Wrap ~72 cols.
-- Footer (optional): `Closes #123`, `Refs #456`. Use `BREAKING CHANGE:` for breaking.
-- Breaking change: add `!` after scope and a `BREAKING CHANGE:` footer describing migration.
-- Revert: `revert: <short-hash> <original subject>` and link the reason/issue.
-- Language: Prefer English imperative for consistency; Korean allowed in the body when helpful.
+  - `scope`(예): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
+  - `subject`: 간결한 한국어 문장(72자 이내, 마침표 생략)
+- 본문(선택): 변경 배경/의도/영향을 한국어로 기술(행 길이 ~72자 권장).
+- 푸터(선택): `Closes #123`, `Refs #456`, 호환깨짐은 `BREAKING CHANGE:`로 기술.
+- 호환깨짐: 스코프 뒤 `!` 표기 + `BREAKING CHANGE:` 푸터에 상세 서술.
+- 되돌리기: `revert: <short-hash> <original subject>` 형식 + 사유 링크.
+- 언어: Subject/Body는 한국어를 기본으로, `type`/`scope` 키워드는 Conventional 표준에 맞춰 영문 사용.
 
 Examples
-- `feat(blog): add hero image support`
-- `fix(oauth): handle missing code parameter (400)`
-- `docs: add OPERATIONS.md and link from README`
-- `ci(web): add deploy workflow (SSH compose build+up)`
-- `refactor(web): extract nginx headers to template`
-- `chore(deps): bump hugo base image`
-- `revert: 1a2b3c4 fix(oauth): handle missing code parameter`
+- `feat(blog): 대표 이미지 지원 추가`
+- `fix(oauth): code 누락 시 400 처리`
+- `docs: OPERATIONS.md 추가 및 README 링크`
+- `ci(web): 배포 워크플로 추가(SSH compose build+up)`
+- `refactor(web): nginx 헤더 템플릿 분리`
+- `chore(deps): hugo 베이스 이미지 업데이트`
+- `revert: 1a2b3c4 fix(oauth): code 누락 시 400 처리`
 
 Granularity
 - One logical change per commit; separate refactors from behavior changes.
