@@ -1,0 +1,63 @@
+name: Deploy Web (compose build + up)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'nginx.conf'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          : "${DEPLOY_SSH_PORT:=22}"
+          ssh-keyscan -p "$DEPLOY_SSH_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy web via SSH
+        run: |
+          : "${DEPLOY_SSH_PORT:=22}"
+          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /srv/traum_homepage
+          # sync repo to latest main
+          if [ -d .git ]; then
+            git fetch --prune origin main
+            git reset --hard origin/main
+          else
+            echo "Repo not found at /srv/traum_homepage" >&2; exit 1
+          fi
+          # build and restart web
+          docker compose build web
+          docker compose up -d web
+          # brief health probe
+          sleep 2
+          curl -sI http://127.0.0.1:17176 | sed -n '1,5p' || true
+          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1,20p'
+          REMOTE
