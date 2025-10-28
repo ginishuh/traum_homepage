@@ -1,0 +1,11 @@
+baseURL = "https://blog.trr.co.kr/"
+title = "TRR 블로그"
+languageCode = "ko-kr"
+paginate = 10
+enableRobotsTXT = true
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+
+[params]
+description = "TRR 공식 블로그"

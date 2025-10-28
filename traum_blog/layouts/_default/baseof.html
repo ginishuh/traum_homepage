@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Title }} | {{ .Site.Title }}</title>
+    <meta name="description" content="{{ with .Params.description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}" />
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, "Apple SD Gothic Neo", sans-serif; line-height: 1.6; margin:0; }
+      header, main, footer { max-width: 880px; margin: 0 auto; padding: 1rem; }
+      header { border-bottom: 1px solid #eee; }
+      a { color: #0366d6; text-decoration: none; }
+      .post { margin: 1.2rem 0; }
+      .meta { color:#666; font-size:.9rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 style="margin:0 0 .25rem 0"><a href="/">{{ .Site.Title }}</a></h1>
+      <nav><a href="/">홈</a> · <a href="/index.xml">RSS</a> · <a href="/admin/">관리</a></nav>
+    </header>
+    <main>
+      {{ block "main" . }}{{ end }}
+    </main>
+    <footer>
+      <small>© {{ now.Format "2006" }} TRR</small>
+    </footer>
+  </body>
+  </html>

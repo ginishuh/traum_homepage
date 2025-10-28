@@ -1,0 +1,14 @@
+# Build stage: Hugo extended image to generate static site
+FROM klakegg/hugo:ext-alpine AS builder
+WORKDIR /src
+COPY . .
+ARG HUGO_ENV=production
+ENV HUGO_ENV=${HUGO_ENV}
+RUN hugo --minify
+
+# Runtime: nginx unprivileged serving built content
+FROM nginxinc/nginx-unprivileged:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /src/public /usr/share/nginx/html
+EXPOSE 8080
+HEALTHCHECK CMD test -f /usr/share/nginx/html/index.html || exit 1

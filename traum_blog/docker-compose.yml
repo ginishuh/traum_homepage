@@ -1,0 +1,38 @@
+services:
+  blog:
+    build: .
+    image: traum/blog:local
+    container_name: traum-blog
+    ports:
+      - "127.0.0.1:17177:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/usr/share/nginx/html/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 로컬 개발용: live reload(Hugo server)
+  blog-local:
+    image: klakegg/hugo:ext-alpine
+    container_name: traum-blog-local
+    working_dir: /src
+    command: server --bind 0.0.0.0 --port 8080 --baseURL http://localhost:17177
+    ports:
+      - "127.0.0.1:17177:8080"
+    volumes:
+      - .:/src
+    restart: unless-stopped
+
+  # GitHub OAuth provider for Decap CMS
+  oauth:
+    build: ./oauth
+    image: traum/blog-oauth:local
+    container_name: traum-blog-oauth
+    env_file:
+      - ./.env
+    environment:
+      - PORT=3000
+    ports:
+      - "127.0.0.1:17178:3000"
+    restart: unless-stopped
