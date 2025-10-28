@@ -74,10 +74,30 @@ body {
 }
 
 .logo-img {
-  height: 70px;
+  height: 56px; /* 데스크톱 헤더 */
   width: auto;
   display: block;
 }
+
+/* 공용 로고(단일 SVG 파일, CSS 마스크로 색/크기 제어) */
+.logo {
+  display: inline-block;
+  height: 70px;               /* 기본: 헤더 높이 */
+  aspect-ratio: 320 / 100;    /* viewBox 비율과 일치 */
+  background-color: var(--logo-color, currentColor);
+  /* Safari(-webkit-) + 표준 마스크 모두 지정 */
+  -webkit-mask-image: url('/brand/logo.svg');
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: url('/brand/logo.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.logo--header { --logo-color: var(--primary-color); }
+.logo--footer { --logo-color: #ffffff; height: 84px; }
 
 .nav-logo a:hover .logo-img {
   transform: scale(1.05);
@@ -870,11 +890,13 @@ section {
 /* Responsive */
 @media (max-width: 768px) {
   .logo-img {
-    height: 50px;
+    height: 40px; /* 모바일 헤더 */
   }
+  .logo--header { height: 40px; }
+  .logo--footer { height: 64px; }
   
   .footer-logo {
-    height: 70px;
+    height: 64px; /* 모바일 푸터 */
   }
   .nav-menu {
     position: fixed;
