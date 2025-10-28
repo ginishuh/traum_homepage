@@ -1,0 +1,10 @@
+# Node/Editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Build artifacts (이미지는 Docker로 빌드)
+dist/
+build/
+node_modules/

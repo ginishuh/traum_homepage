@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    image: traum/homepage:local
+    container_name: traum-homepage
+    ports:
+      - "127.0.0.1:17176:8080"   # 비루트 이미지 기본 포트 8080 (로컬루프백 고정)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/usr/share/nginx/html/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web-local:
+    image: nginxinc/nginx-unprivileged:alpine
+    container_name: traum-homepage-local
+    ports:
+      - "127.0.0.1:17176:8080"
+    restart: unless-stopped
+    volumes:
+      - ./src:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "test", "-f", "/usr/share/nginx/html/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
