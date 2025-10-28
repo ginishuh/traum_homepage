@@ -74,9 +74,10 @@ body {
 }
 
 .logo-img {
-  height: 56px; /* 데스크톱 헤더 */
+  height: 70px; /* 데스크톱 헤더 */
   width: auto;
   display: block;
+  aspect-ratio: 1029 / 600; /* SVG viewBox 비율 고정 */
 }
 
 /* 공용 로고(단일 SVG 파일, CSS 마스크로 색/크기 제어) */
@@ -774,9 +775,10 @@ section {
 }
 
 .footer-logo {
-  height: 100px;
+  height: 84px; /* 데스크톱 푸터 */
   width: auto;
   margin-bottom: 20px;
+  aspect-ratio: 1029 / 600;
 }
 
 .footer-brand p {
