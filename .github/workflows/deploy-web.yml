@@ -53,6 +53,19 @@ jobs:
           ssh-private-key: |
             ${{ secrets.DEPLOY_SSH_KEY }}
 
+      - name: Verify SSH key loaded (debug)
+        run: |
+          set -e
+          echo "ssh-add identities:"; ssh-add -l -E md5 || ssh-add -l || true
+          echo "ssh version:"; ssh -V
+
+      - name: Test SSH connectivity (debug)
+        run: |
+          set -e
+          : "${DEPLOY_SSH_PORT:=22}"
+          echo "Testing SSH to $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_SSH_PORT"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -p "$DEPLOY_SSH_PORT" -v "$DEPLOY_USER@$DEPLOY_HOST" 'echo OK from $(hostname)'
+
       - name: Add host key
         run: |
           mkdir -p ~/.ssh
