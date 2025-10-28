@@ -10,6 +10,11 @@ on:
       - 'docker-compose.yml'
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: '강제로 docker compose build 실행'
+        required: false
+        default: 'false'
 
 concurrency:
   group: deploy-web
@@ -54,19 +59,6 @@ jobs:
           ssh-private-key: |
             ${{ secrets.DEPLOY_SSH_KEY }}
 
-      - name: Verify SSH key loaded (debug)
-        run: |
-          set -e
-          echo "ssh-add identities:"; ssh-add -l -E md5 || ssh-add -l || true
-          echo "ssh version:"; ssh -V
-
-      - name: Test SSH connectivity (debug)
-        run: |
-          set -e
-          : "${DEPLOY_SSH_PORT:=22}"
-          echo "Testing SSH to $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_SSH_PORT"
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -p "$DEPLOY_SSH_PORT" -v "$DEPLOY_USER@$DEPLOY_HOST" 'echo OK from $(hostname)'
-
       - name: Add host key
         run: |
           mkdir -p ~/.ssh
@@ -84,19 +76,29 @@ jobs:
             if [ -d .git ]; then \
               echo Updating existing repo...; \
               git remote set-url origin \"$REPO_URL\"; \
+              PREV=\"\$(git rev-parse HEAD || echo)\"; \
               if ! git fetch --prune origin main; then \
                 echo Fetch without token failed, retry with token header...; \
                 git -c http.extraHeader=\"Authorization: Bearer $GITHUB_TOKEN\" fetch --prune origin main; \
               fi; \
               git reset --hard origin/main; \
-            else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; fi; \
-            if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-              docker compose build web && docker compose up -d web; \
-            elif command -v docker-compose >/dev/null 2>&1; then \
-              docker-compose build web && docker-compose up -d web; \
+              NEW=\"\$(git rev-parse HEAD)\"; \
+            else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; PREV=; NEW=\"\$(git rev-parse HEAD)\"; fi; \
+            CHANGED=\"\$(git diff --name-only \"$PREV\" \"$NEW\" -- src Dockerfile nginx.conf docker-compose.yml 2>/dev/null || true)\"; \
+            FORCE=\"${{ (github.event_name == 'workflow_dispatch' && inputs.force_build == 'true') && '1' || '0' }}\"; \
+            echo PREV=\"$PREV\" NEW=\"$NEW\"; echo CHANGED=\"$CHANGED\"; echo FORCE_BUILD=\"$FORCE\"; \
+            if [ -z \"$PREV\" ] || [ -n \"$CHANGED\" ] || [ \"$FORCE\" = \"1\" ]; then \
+              echo Running docker build...; \
+              export DOCKER_BUILDKIT=1; \
+              if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then docker compose build web; \
+              elif command -v docker-compose >/dev/null 2>&1; then docker-compose build web; \
+              else echo docker\\ compose\\ not\\ found >&2; exit 1; fi; \
             else \
-              echo docker\\ compose\\ not\\ found >&2; exit 1; \
+              echo No relevant changes detected; skipping docker build; \
             fi; \
+            if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then docker compose up -d web; \
+            elif command -v docker-compose >/dev/null 2>&1; then docker-compose up -d web; \
+            else echo docker\\ compose\\ not\\ found >&2; exit 1; fi; \
             sleep 2; \
             curl -sI http://127.0.0.1:17176 | sed -n \"1,5p\" || true; \
             docker ps --format \"table {{.Names}}\t{{.Image}}\t{{.Status}}\" | sed -n \"1,20p\"'"
