@@ -1,0 +1,5 @@
+services:
+  blog:
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+

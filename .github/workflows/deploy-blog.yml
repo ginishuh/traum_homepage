@@ -1,0 +1,62 @@
+name: Deploy Blog (Hugo ➜ rsync)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'traum_blog/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-blog
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEST: /srv/traum_homepage/traum_blog/public/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Hugo (extended)
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - name: Build blog with Hugo
+        working-directory: traum_blog
+        run: |
+          hugo --minify
+
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          : "${DEPLOY_SSH_PORT:=22}"
+          ssh-keyscan -p "$DEPLOY_SSH_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Ensure target directory exists
+        run: |
+          : "${DEPLOY_SSH_PORT:=22}"
+          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            'mkdir -p /srv/traum_homepage/traum_blog/public'
+
+      - name: Rsync public/ to VPS
+        run: |
+          : "${DEPLOY_SSH_PORT:=22}"
+          rsync -az --delete -e "ssh -p $DEPLOY_SSH_PORT" \
+            traum_blog/public/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
+

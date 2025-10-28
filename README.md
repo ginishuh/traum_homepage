@@ -64,6 +64,23 @@ server {
 - GitHub OAuth App 등록(Homepage/Callback URL은 README의 블로그 섹션 참조)
 - `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동
 
+## 자동배포(블로그) · GitHub Secrets
+블로그는 커밋 시 GitHub Actions가 Hugo로 빌드하고 결과물(`traum_blog/public/`)만 VPS로 rsync 동기화합니다.
+
+- 워크플로: `.github/workflows/deploy-blog.yml`
+- Secrets(레포 Settings → Secrets and variables → Actions)
+  - Name `DEPLOY_HOST`  → Value `115.68.178.200`
+  - Name `DEPLOY_USER`  → Value `root` (또는 `deploy`)
+  - Name `DEPLOY_SSH_PORT` → Value `22` (기본값이면 생략 가능)
+  - Name `DEPLOY_SSH_KEY` → Value (SSH 개인키 전체. 예: `-----BEGIN OPENSSH PRIVATE KEY----- ...`)  
+    - 권장: 배포 전용 키 생성 후 공개키는 VPS `~/.ssh/authorized_keys`에 등록
+    - 예시(로컬/Git Bash):
+      - `ssh-keygen -t ed25519 -C "gh-actions-deploy-trr" -f ~/.ssh/gh_actions_trr -N ''`
+      - `ssh-copy-id -i ~/.ssh/gh_actions_trr.pub root@115.68.178.200`
+      - `ssh -i ~/.ssh/gh_actions_trr root@115.68.178.200 'echo OK'` (접속 확인)
+
+배포 흐름: CMS에서 글 발행(=커밋) → Actions 자동 실행 → 수십 초 내 반영(컨테이너 재시작 없음).
+
 ## 주의
 - `.env`와 인증서는 커밋 금지(.gitignore 반영)
 - 컨테이너는 비루트 이미지(`nginxinc/nginx-unprivileged`) 사용, 포트는 8080 고정
