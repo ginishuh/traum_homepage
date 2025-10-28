@@ -14,6 +14,8 @@ services:
 
   # 로컬 개발용: live reload(Hugo server)
   blog-local:
+    # Run as host user to avoid root-owned files when developing locally
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
     image: klakegg/hugo:ext-alpine
     container_name: traum-blog-local
     working_dir: /src
