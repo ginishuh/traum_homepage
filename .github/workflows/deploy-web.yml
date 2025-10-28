@@ -61,35 +61,21 @@ jobs:
       - name: Deploy web via SSH
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "bash -se" <<REMOTE
-          set -euo pipefail
-          sudo -n true >/dev/null 2>&1 || true
-          mkdir -p /srv/traum_homepage
-          cd /srv/traum_homepage
-          if [ -d .git ]; then
-            git fetch --prune origin main
-            git reset --hard origin/main
-          else
-            echo 'Cloning repository (first deploy)…'
-            git clone --depth=1 "$REPO_URL" .
-          fi
-          # determine compose command
-          if docker compose version >/dev/null 2>&1; then
-            DOCKER_COMPOSE="docker compose"
-          elif docker-compose version >/dev/null 2>&1; then
-            DOCKER_COMPOSE="docker-compose"
-          else
-            echo 'docker compose not found' >&2; exit 1
-          fi
-          # build and restart web
-          $DOCKER_COMPOSE build web
-          $DOCKER_COMPOSE up -d web
-          # brief health probe
-          sleep 2
-          curl -sI http://127.0.0.1:17176 | sed -n '1,5p' || true
-          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1,20p'
-REMOTE
+          REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
+          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash -se -c 'set -euo pipefail; \
+            mkdir -p /srv/traum_homepage; \
+            cd /srv/traum_homepage; \
+            if [ -d .git ]; then git fetch --prune origin main && git reset --hard origin/main; \
+            else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; fi; \
+            if docker compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker compose\"; \
+            elif docker-compose version >/dev/null 2>&1; then DOCKER_COMPOSE=\"docker-compose\"; \
+            else echo docker\ compose\ not\ found >&2; exit 1; fi; \
+            $DOCKER_COMPOSE build web; \
+            $DOCKER_COMPOSE up -d web; \
+            sleep 2; \
+            curl -sI http://127.0.0.1:17176 | sed -n \"1,5p\" || true; \
+            docker ps --format \"table {{.Names}}\t{{.Image}}\t{{.Status}}\" | sed -n \"1,20p\"'"
 
       # Slack 알림 스텝 제거됨 (미사용)
 name: Deploy Web (compose build + up)
