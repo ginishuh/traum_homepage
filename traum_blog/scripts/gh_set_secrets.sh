@@ -6,7 +6,9 @@ set -euo pipefail
 # - Usage:   ./traum_blog/scripts/gh_set_secrets.sh [owner/repo]
 
 REPO="${1:-ginishuh/traum_homepage}"
-DEPLOY_HOST_DEFAULT="115.68.178.200"
+# 반드시 실제 VPS 공인 IP로 교체하세요. 예: 203.0.113.10 (샘플)
+# NOTE: 이 값은 예시일 뿐이며, 그대로 실행하면 잘못된 Secrets가 설정됩니다.
+DEPLOY_HOST_DEFAULT="서버_IP"
 DEPLOY_USER_DEFAULT="root"
 DEPLOY_SSH_PORT_DEFAULT="22"
 KEY_FILE_DEFAULT="/root/.ssh/gh_actions_trr"
@@ -46,4 +48,3 @@ gh secret set DEPLOY_SSH_KEY   < "$KEY_FILE"
 echo "Secrets set. (DEPLOY_HOST/USER/PORT/SSH_KEY)"
 echo "Optional: shred private key on server if you don't want to keep a copy:"
 echo "  shred -u $KEY_FILE"
-
