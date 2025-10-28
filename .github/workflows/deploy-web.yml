@@ -29,6 +29,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check required secrets
+        run: |
+          set -euo pipefail
+          missing=0
+          for var in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [ -z "${!var:-}" ]; then
+              echo "::error title=Missing secret::${var} is not set in repository Actions secrets";
+              missing=$((missing+1))
+            fi
+          done
+          if [ -z "${DEPLOY_SSH_PORT:-}" ]; then
+            echo "info: DEPLOY_SSH_PORT not set, defaulting to 22";
+          fi
+          if [ $missing -gt 0 ]; then
+            echo "Some required secrets are missing. Add them in Settings → Secrets and variables → Actions.";
+            exit 1;
+          fi
+
       - name: Start ssh-agent and add key
         uses: webfactory/ssh-agent@v0.9.0
         with:
