@@ -70,15 +70,15 @@ server {
 
 - 워크플로: `.github/workflows/deploy-blog.yml`
 - Secrets(레포 Settings → Secrets and variables → Actions)
-  - Name `DEPLOY_HOST`  → Value `115.68.178.200`
+  - Name `DEPLOY_HOST`  → Value `서버_IP`
   - Name `DEPLOY_USER`  → Value `root` (또는 `deploy`)
   - Name `DEPLOY_SSH_PORT` → Value `22` (기본값이면 생략 가능)
   - Name `DEPLOY_SSH_KEY` → Value (SSH 개인키 전체. 예: `-----BEGIN OPENSSH PRIVATE KEY----- ...`)  
     - 권장: 배포 전용 키 생성 후 공개키는 VPS `~/.ssh/authorized_keys`에 등록
     - 예시(로컬/Git Bash):
       - `ssh-keygen -t ed25519 -C "gh-actions-deploy-trr" -f ~/.ssh/gh_actions_trr -N ''`
-      - `ssh-copy-id -i ~/.ssh/gh_actions_trr.pub root@115.68.178.200`
-      - `ssh -i ~/.ssh/gh_actions_trr root@115.68.178.200 'echo OK'` (접속 확인)
+      - `ssh-copy-id -i ~/.ssh/gh_actions_trr.pub root@서버_IP`
+      - `ssh -i ~/.ssh/gh_actions_trr root@서버_IP 'echo OK'` (접속 확인)
 
 배포 흐름: CMS에서 글 발행(=커밋) → Actions 자동 실행 → 수십 초 내 반영(컨테이너 재시작 없음).
 
