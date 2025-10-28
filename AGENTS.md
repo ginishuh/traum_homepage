@@ -116,3 +116,8 @@ Granularity
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
 - Port conflicts: adjust `.env` ports; keep loopback binds.
+
+
+## Commitlint
+- PR에서만 검사합니다(직접 push에는 미적용). 블로그 CMS의 main 직접 커밋/배포에는 영향을 주지 않습니다.
+- 규칙: Conventional Commits(한국어 subject 허용), 상세는 `.commitlintrc.yml` 참고.
