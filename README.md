@@ -11,6 +11,7 @@
   - `web` — 프로덕션(이미지 빌드 후 실행)
   - `web-local` — 로컬 개발(소스 마운트)
 - `traum_blog/` — Hugo + Decap CMS 블로그(별도 compose/Dockerfile 포함)
+  - `static/brand/` — 회사 로고 등 브랜드 에셋(홈/블로그 공용)
 
 ## 환경변수(.env)
 홈페이지 컨테이너 바인딩은 `.env`로 조정합니다. 예시는 `.env.example` 참고.
@@ -64,6 +65,12 @@ server {
 - 관리페이지: `https://blog.trr.co.kr/admin/`
 - GitHub OAuth App 등록(Homepage/Callback URL은 README의 블로그 섹션 참조)
 - `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동
+
+### 브랜드 에셋 경로(공용)
+- 저장 위치: `traum_blog/static/brand/`
+- 프로덕션 참조 URL: `https://blog.trr.co.kr/brand/<파일명>.svg`
+- 로컬 참조 URL: `http://127.0.0.1:17177/brand/<파일명>.svg`
+- 캐시 주의: SVG는 30일 + `immutable` → 교체 시 파일명 버저닝(예: `logo.20251028.svg`)
 
 ## 자동배포(블로그) · GitHub Secrets
 블로그는 커밋 시 GitHub Actions가 Hugo로 빌드하고 결과물(`traum_blog/public/`)만 VPS로 rsync 동기화합니다.
