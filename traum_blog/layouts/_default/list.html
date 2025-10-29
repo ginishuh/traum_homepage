@@ -1,4 +1,18 @@
 {{ define "main" }}
+{{ if .IsHome }}
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">트라움자원 필드노트</h1>
+    <p class="hero-sub">현장, 시장, 운영의 기록</p>
+    <div class="hero-actions">
+      <a href="/market" class="btn btn-primary">시장읽기</a>
+      <a href="/story" class="btn btn-outline">전체 글</a>
+    </div>
+  </div>
+  <!-- 배경 이미지는 필요 시 static/brand 에 추가 후, hero-bg에 background-image로 확장 가능 -->
+</section>
+{{ end }}
 <div class="category-header">
   <div class="category-nav">
     <a href="/market" class="nav-item {{ if eq .Section "market" }}active{{ end }}">시장읽기</a>
