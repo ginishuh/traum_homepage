@@ -11,18 +11,3 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
-
-  web-local:
-    image: nginxinc/nginx-unprivileged:alpine
-    container_name: traum-homepage-local
-    ports:
-      - "${HTTP_BIND_HOST:-127.0.0.1}:${HOMEPAGE_PORT:-17176}:8080"
-    restart: unless-stopped
-    volumes:
-      - ./src:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    healthcheck:
-      test: ["CMD", "test", "-f", "/usr/share/nginx/html/index.html"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
