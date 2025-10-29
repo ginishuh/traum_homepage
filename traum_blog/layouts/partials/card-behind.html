@@ -1,21 +1,26 @@
 <div class="card card-behind">
-  <div class="card-timeline">
-    <div class="timeline-dot"></div>
-  </div>
+  <div class="card-color-band"></div>
+  
+  {{ with .Params.image }}
+  <img src="{{ . }}" alt="{{ $.Title }}" class="card-image" loading="lazy">
+  {{ end }}
+  
   <div class="card-content">
     <div class="card-category">비하인드</div>
     <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
     <div class="card-summary">{{ .Params.summary }}</div>
     
-    <div class="lesson-preview">
-      <span class="lesson-icon">💡</span>
-      <span class="lesson-text">핵심 교훈 미리보기...</span>
+    {{ with .Params.timeline }}
+    <div class="timeline-badge">
+      <div class="timeline-dot"></div>
+      <span>{{ . }}</span>
     </div>
+    {{ end }}
     
     <div class="card-meta">
-      <span class="date">{{ .Date.Format "01.02" }}</span>
+      <span class="date">{{ .Date.Format "2006.01.02" }}</span>
       {{ if .Params.tags }}
-        <span class="tag">{{ index .Params.tags 0 }}</span>
+      <span class="tag">{{ index .Params.tags 0 }}</span>
       {{ end }}
     </div>
   </div>

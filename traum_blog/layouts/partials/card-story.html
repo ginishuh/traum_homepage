@@ -1,21 +1,26 @@
 <div class="card card-story">
-  <div class="card-timeline">
-    <div class="timeline-dot"></div>
-  </div>
+  <div class="card-color-band"></div>
+  
+  {{ with .Params.image }}
+  <img src="{{ . }}" alt="{{ $.Title }}" class="card-image" loading="lazy">
+  {{ end }}
+  
   <div class="card-content">
     <div class="card-category">이야기</div>
     <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
     <div class="card-summary">{{ .Params.summary }}</div>
     
+    {{ with .Params.quote }}
     <div class="quote-preview">
       <span class="quote-mark">"</span>
-      <span class="quote-text">핵심 문장 미리보기...</span>
+      <p>{{ . }}</p>
     </div>
+    {{ end }}
     
     <div class="card-meta">
-      <span class="date">{{ .Date.Format "01.02" }}</span>
+      <span class="date">{{ .Date.Format "2006.01.02" }}</span>
       {{ if .Params.tags }}
-        <span class="tag">{{ index .Params.tags 0 }}</span>
+      <span class="tag">{{ index .Params.tags 0 }}</span>
       {{ end }}
     </div>
   </div>

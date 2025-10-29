@@ -12,23 +12,135 @@
     <link rel="stylesheet" href="/css/blog.css" />
   </head>
   <body>
-    <header>
-      <h1 style="margin:0 0 .25rem 0"><a href="/">{{ .Site.Title }}</a></h1>
-      <nav>
-        <a href="/">홈</a> · 
-        <a href="/market">시장읽기</a> · 
-        <a href="/ops">운영노트</a> · 
-        <a href="/behind">비하인드</a> · 
-        <a href="/story">이야기</a> · 
-        <a href="/index.xml">RSS</a> · 
-        <a href="/admin/">관리</a>
-      </nav>
+    <header class="header">
+      <div class="header-inner">
+        <!-- Logo Lockup -->
+        <a href="/" class="logo-lockup">
+          <!-- Logo SVG -->
+          <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="#1A4F34"/>
+            <path d="M12 12h16v4h-6v12h-4V16h-6v-4z" fill="white"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-title">트라움자원 필드노트</span>
+            <span class="logo-subtitle">현장, 시장, 운영의 기록</span>
+          </div>
+        </a>
+        
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav">
+          <a href="/" class="nav-link active">홈</a>
+          <a href="/posts/" class="nav-link">글 목록</a>
+          <a href="/about/" class="nav-link">소개</a>
+        </nav>
+
+        <!-- Mobile Hamburger -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+          <svg class="mobile-menu-icon" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile Menu Drawer -->
+      <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        <nav class="mobile-menu-drawer">
+          <div class="mobile-menu-header">
+            <span>메뉴</span>
+            <button class="mobile-menu-close" id="mobileMenuClose">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="mobile-menu-links">
+            <a href="/" class="mobile-nav-link">홈</a>
+            <a href="/posts/" class="mobile-nav-link">글 목록</a>
+            <a href="/about/" class="mobile-nav-link">소개</a>
+          </div>
+        </nav>
+      </div>
     </header>
+
+    <script>
+      // Mobile menu toggle
+      (function() {
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        function openMenu() {
+          mobileMenu.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function closeMenu() {
+          mobileMenu.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+
+        mobileMenuBtn.addEventListener('click', function() {
+          if (mobileMenu.classList.contains('active')) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+
+        mobileMenuClose.addEventListener('click', closeMenu);
+        mobileMenuOverlay.addEventListener('click', closeMenu);
+
+        // Close on navigation
+        document.querySelectorAll('.mobile-nav-link').forEach(function(link) {
+          link.addEventListener('click', closeMenu);
+        });
+      })();
+    </script>
     <main>
       {{ block "main" . }}{{ end }}
     </main>
     <footer>
-      <small>© {{ now.Format "2006" }} 트라움자원</small>
+      <div style="max-width: var(--container-max); margin: 0 auto;">
+        <!-- Logo and Tagline -->
+        <div style="margin-bottom: 3rem;">
+          <svg width="64" height="64" viewBox="0 0 84 84" fill="none" style="margin-bottom: 1rem;">
+            <rect width="84" height="84" rx="16" fill="white" fill-opacity="0.1"/>
+            <path d="M25 25h34v8h-13v26h-8V33h-13v-8z" fill="white"/>
+          </svg>
+          <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">트라움자원 필드노트</div>
+          <div style="color: rgba(255, 255, 255, 0.7);">현장, 시장, 운영의 기록</div>
+        </div>
+        
+        <!-- Links Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+          <div>
+            <h4 style="margin-bottom: 1rem; font-weight: 700;">블로그</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <a href="/">최신 글</a>
+              <a href="/market">시장읽기</a>
+              <a href="/ops">운영노트</a>
+              <a href="/behind">비하인드</a>
+              <a href="/story">이야기</a>
+            </div>
+          </div>
+          
+          <div>
+            <h4 style="margin-bottom: 1rem; font-weight: 700;">회사</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <a href="https://www.trr.co.kr">홈페이지</a>
+              <a href="https://www.trr.co.kr#about">소개</a>
+              <a href="https://www.trr.co.kr#contact">연락처</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Copyright -->
+        <div style="padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+          <small>© {{ now.Format "2006" }} 트라움자원. All rights reserved.</small>
+        </div>
+      </div>
     </footer>
   </body>
-  </html>
+</html>
