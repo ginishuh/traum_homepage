@@ -1,0 +1,76 @@
+/* 블로그 디자인 토큰(홈페이지 톤 이식) */
+:root {
+  /* Brand colors */
+  --color-primary: #1A4F34;
+  --color-primary-dark: #0F3322;
+  --color-primary-light: #2D7550;
+  --color-secondary: #4A9D6F;
+  --color-accent: #E8FBE5;
+
+  /* Text / Surfaces */
+  --color-text: #333333;
+  --color-text-muted: #666666;
+  --color-bg: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+
+  /* Blog categories */
+  --color-category-market: #2D6CDF;
+  --color-category-ops: #F59E0B;
+  --color-category-behind: #10B981;
+  --color-category-story: #6B7280;
+
+  /* Radius */
+  --radius-card: 12px;
+  --radius-panel: 15px;
+  --radius-button: 50px;
+  --radius-chip: 16px;
+
+  /* Shadows */
+  --shadow-base: 0 2px 10px rgba(0,0,0,.10);
+  --shadow-hover: 0 5px 20px rgba(0,0,0,.15);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Typography */
+  --font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, 'Apple SD Gothic Neo', sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.6;
+
+  /* Effects */
+  --transition-std: 300ms ease;
+  --overlay-gradient: linear-gradient(135deg, rgba(26,79,52,0.80) 0%, rgba(74,157,111,0.60) 100%);
+
+  /* Container & section */
+  --container-max: 1200px;
+  --section-padding-y: 80px;
+}
+
+/* 홈페이지 토큰과 호환 매핑(선택적) */
+:root {
+  --primary-color: var(--color-primary);
+  --primary-dark: var(--color-primary-dark);
+  --primary-light: var(--color-primary-light);
+  --secondary-color: var(--color-secondary);
+  --accent-color: var(--color-accent);
+  --text-dark: var(--color-text);
+  --text-light: var(--color-text-muted);
+  --bg-light: var(--color-bg);
+  --bg-white: var(--color-surface);
+  --shadow: var(--shadow-base);
+  --shadow-hover: var(--shadow-hover);
+}
+
+html { font-size: var(--font-size-base); }
+body  { font-family: var(--font-family); line-height: var(--line-height-base); color: var(--color-text); }
