@@ -26,7 +26,7 @@
   - `ALLOWED_ORIGINS=https://blog.trr.co.kr`
   - `GITHUB_SCOPE=public_repo`(공개 레포 기준)
   - (선택) `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`
-- 로컬 개발 편의: `DEV_UID`, `DEV_GID`(blog-local 전용)
+ 
 
 ## CI/CD
 - 블로그 자동배포(무중단)

@@ -11,10 +11,10 @@
 ## 빠른 시작(로컬)
 ```bash
 cd traum_blog
-# 로컬 미리보기(Hugo dev server)
-docker compose up -d blog-local
-# 정적 빌드 이미지로 확인(운영과 동일 경로)
+# 정적 빌드 이미지(운영과 동일 경로)
 docker compose build blog && docker compose up -d blog
+# (선택) OAuth 서버
+docker compose up -d oauth
 # Admin UI (Decap) 정적 파일: http://localhost:17177/admin/
 ```
 

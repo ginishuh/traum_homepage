@@ -28,7 +28,6 @@ Scope: Entire repository.
   - `ALLOWED_ORIGINS` (e.g., `https://blog.trr.co.kr`)
   - `GITHUB_SCOPE` = `public_repo` (public repo) or `repo` (private repo)
   - Optional: `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`
-- Local dev only: `DEV_UID`, `DEV_GID` for `blog-local` to avoid root-owned files.
 
 ## CI / CD (GitHub Actions)
 - Blog auto-deploy: `.github/workflows/deploy-blog.yml`
@@ -43,7 +42,6 @@ Scope: Entire repository.
 ## Runtime users (non-root)
 - Web/Blog runtime images are `nginxinc/nginx-unprivileged` (non-root 8080).
 - OAuth runtime uses `USER node` (non-root). Do not switch back to root.
-- For local dev, `blog-local` supports host UID/GID via `DEV_UID/DEV_GID`.
 
 ## Nginx / TLS (host)
 - Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
@@ -62,12 +60,9 @@ Scope: Entire repository.
 - See `docs/OPERATIONS.md` for common commands, checks, and procedures.
 
 ## Local commands
-- Homepage
-  - Run (live mount): `docker compose up -d web-local`
-  - Build+Run (prod): `docker compose build web && docker compose up -d web`
-- Blog
-  - `cd traum_blog && docker compose build blog && docker compose up -d blog`
-  - OAuth for Decap CMS: set `traum_blog/.env` and `docker compose up -d oauth`
+- Homepage: `docker compose build web && docker compose up -d web`
+- Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
+- OAuth for Decap CMS: `cd traum_blog`에서 `.env` 설정 후 `docker compose up -d oauth`
 
 ## Ports
 - Homepage: 127.0.0.1:17176 → 8080

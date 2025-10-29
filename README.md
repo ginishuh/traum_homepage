@@ -7,9 +7,7 @@
 - `src/` — 홈페이지 정적 파일(HTML/CSS/JS)
 - `Dockerfile` — 홈페이지 빌드/런(nginx unprivileged, 8080)
 - `nginx.conf` — 보안 헤더/캐시/압축 기본 설정
-- `docker-compose.yml`
-  - `web` — 프로덕션(이미지 빌드 후 실행)
-  - `web-local` — 로컬 개발(소스 마운트)
+- `docker-compose.yml` — `web` 서비스(이미지 빌드 후 실행)
 - `traum_blog/` — Hugo + Decap CMS 블로그(별도 compose/Dockerfile 포함)
   - `static/brand/` — 회사 로고 등 브랜드 에셋(홈/블로그 공용)
 
@@ -23,11 +21,10 @@ HOMEPAGE_PORT=17176
 
 ## 로컬 실행
 ```bash
-cd traum_homepage
-# 홈페이지(라이브 마운트, http://127.0.0.1:17176)
-docker compose up -d web-local
+# 홈페이지 (http://127.0.0.1:17176)
+docker compose build web && docker compose up -d web
 
-# 블로그(정적 이미지 빌드, http://127.0.0.1:17177)
+# 블로그 (http://127.0.0.1:17177)
 cd traum_blog && docker compose build blog && docker compose up -d blog
 # (선택) CMS OAuth 프록시: .env 설정 후
 docker compose up -d oauth
@@ -103,4 +100,3 @@ server {
 
 ## 로컬 개발 팁
 - 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).
-- `blog-local`은 호스트 UID/GID 매핑 지원: `DEV_UID`, `DEV_GID`를 설정하면 루트 소유 파일을 방지합니다.
