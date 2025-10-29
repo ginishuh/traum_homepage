@@ -1,0 +1,42 @@
+<nav class="pagination">
+  {{ if .Paginator.HasPrev }}
+    <a href="{{ .Paginator.Prev.URL }}" class="prev">← 이전</a>
+  {{ end }}
+  
+  <span class="page-numbers">
+    페이지 {{ .Paginator.PageNumber }} / {{ .Paginator.TotalPages }}
+  </span>
+  
+  {{ if .Paginator.HasNext }}
+    <a href="{{ .Paginator.Next.URL }}" class="next">다음 →</a>
+  {{ end }}
+</nav>
+
+<style>
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1rem;
+}
+
+.pagination a {
+  padding: 0.5rem 1rem;
+  background: var(--color-market);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.pagination a:hover {
+  background: #1d4ed8;
+}
+
+.page-numbers {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+</style>

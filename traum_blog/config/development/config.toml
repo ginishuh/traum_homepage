@@ -1,4 +1,4 @@
-baseURL = "https://blog.trr.co.kr/"
+baseURL = "http://127.0.0.1:17177/"
 title = "트라움자원 필드노트"
 languageCode = "ko-kr"
 enableRobotsTXT = true

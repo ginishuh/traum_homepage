@@ -1,0 +1,23 @@
+<div class="card card-ops">
+  <div class="card-icon">
+    <div class="checklist-icon">✓</div>
+  </div>
+  <div class="card-content">
+    <div class="card-category">운영노트</div>
+    <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    <div class="card-summary">{{ .Params.summary }}</div>
+    
+    {{ if .Params.assets }}
+      <div class="download-badge">
+        <span>다운로드</span>
+      </div>
+    {{ end }}
+    
+    <div class="card-meta">
+      <span class="date">{{ .Date.Format "01.02" }}</span>
+      {{ if .Params.tags }}
+        <span class="tag">{{ index .Params.tags 0 }}</span>
+      {{ end }}
+    </div>
+  </div>
+</div>

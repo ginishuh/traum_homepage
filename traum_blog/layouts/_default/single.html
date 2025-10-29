@@ -1,7 +1,57 @@
 {{ define "main" }}
-  <article>
-    <h2>{{ .Title }}</h2>
-    <div class="meta">{{ .Date.Format "2006-01-02" }}</div>
+<article class="post">
+  <header class="post-header">
+    <div class="category-band category-{{ .Params.category }}"></div>
+    <h1>{{ .Title }}</h1>
+    <div class="post-summary">{{ .Params.summary }}</div>
+    <div class="post-meta">
+      <span class="author">{{ .Params.author | default "트라움자원" }}</span>
+      <span class="date">{{ .Date.Format "2006.01.02" }}</span>
+      <span class="read-time">{{ .ReadingTime }}분</span>
+      {{ with .Params.tags }}
+        <div class="tags">
+          {{ range . }}
+            <span class="tag">{{ . }}</span>
+          {{ end }}
+        </div>
+      {{ end }}
+    </div>
+  </header>
+
+  <div class="post-content">
     {{ .Content }}
-  </article>
+  </div>
+
+  {{ if .Params.kpis }}
+    <div class="post-kpis">
+      {{ range .Params.kpis }}
+        <div class="kpi-badge">
+          <span class="kpi-label">{{ .label }}</span>
+          <span class="kpi-value">{{ .value }}</span>
+        </div>
+      {{ end }}
+    </div>
+  {{ end }}
+
+  {{ if .Params.assets }}
+    <div class="post-assets">
+      {{ range .Params.assets }}
+        <a href="{{ .path }}" class="asset-link" download>
+          {{ .title }}
+          <span class="download-icon">⬇</span>
+        </a>
+      {{ end }}
+    </div>
+  {{ end }}
+</article>
+
+<div class="related-posts">
+  <h3>같은 카테고리 글</h3>
+  <div class="related-grid">
+    {{ $related := .Site.RegularPages.Related . | first 3 }}
+    {{ range $related }}
+      {{ partial (printf "card-%s.html" .Params.category) . }}
+    {{ end }}
+  </div>
+</div>
 {{ end }}

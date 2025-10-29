@@ -1,0 +1,22 @@
+<div class="card card-story">
+  <div class="card-timeline">
+    <div class="timeline-dot"></div>
+  </div>
+  <div class="card-content">
+    <div class="card-category">이야기</div>
+    <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    <div class="card-summary">{{ .Params.summary }}</div>
+    
+    <div class="quote-preview">
+      <span class="quote-mark">"</span>
+      <span class="quote-text">핵심 문장 미리보기...</span>
+    </div>
+    
+    <div class="card-meta">
+      <span class="date">{{ .Date.Format "01.02" }}</span>
+      {{ if .Params.tags }}
+        <span class="tag">{{ index .Params.tags 0 }}</span>
+      {{ end }}
+    </div>
+  </div>
+</div>

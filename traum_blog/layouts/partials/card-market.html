@@ -1,0 +1,31 @@
+<div class="card card-market">
+  <div class="card-thumbnail">
+    <div class="mini-chart">
+      <!-- 간단한 차트 플레이스홀더 -->
+      <div class="chart-placeholder">📊</div>
+    </div>
+  </div>
+  <div class="card-content">
+    <div class="card-category">시장읽기</div>
+    <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    <div class="card-summary">{{ .Params.summary }}</div>
+    
+    {{ with .Params.kpis }}
+      <div class="kpis-mini">
+        {{ range . }}
+          <div class="kpi-mini">
+            <span class="kpi-label">{{ .label }}</span>
+            <span class="kpi-value">{{ .value }}</span>
+          </div>
+        {{ end }}
+      </div>
+    {{ end }}
+    
+    <div class="card-meta">
+      <span class="date">{{ .Date.Format "01.02" }}</span>
+      {{ if .Params.tags }}
+        <span class="tag">{{ index .Params.tags 0 }}</span>
+      {{ end }}
+    </div>
+  </div>
+</div>

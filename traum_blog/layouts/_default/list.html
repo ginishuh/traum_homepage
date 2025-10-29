@@ -1,10 +1,30 @@
 {{ define "main" }}
-  <h2>{{ .Title }}</h2>
+<div class="category-header">
+  <div class="category-nav">
+    <a href="/market" class="nav-item {{ if eq .Section "market" }}active{{ end }}">시장읽기</a>
+    <a href="/ops" class="nav-item {{ if eq .Section "ops" }}active{{ end }}">운영노트</a>
+    <a href="/behind" class="nav-item {{ if eq .Section "behind" }}active{{ end }}">비하인드</a>
+    <a href="/story" class="nav-item {{ if eq .Section "story" }}active{{ end }}">이야기</a>
+  </div>
+  
+  <div class="filters">
+    <div class="filter-tabs">
+      <button class="tab active">전체</button>
+      <button class="tab">회사</button>
+      <button class="tab">개인</button>
+    </div>
+    <div class="search">
+      <input type="search" placeholder="검색...">
+    </div>
+  </div>
+</div>
+
+<div class="posts-grid">
   {{ range .Paginator.Pages }}
-    <article class="post">
-      <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-      <div class="meta">{{ .Date.Format "2006-01-02" }} · {{ len .Content | printf "%d" }} bytes</div>
-      <p>{{ .Summary }}</p>
-    </article>
+    {{ $category := .Params.category | default "story" }}
+    {{ partial (printf "card-%s.html" $category) . }}
   {{ end }}
+</div>
+
+{{ partial "pagination.html" . }}
 {{ end }}
