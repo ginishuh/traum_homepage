@@ -1,50 +1,116 @@
 {{ define "main" }}
-<article class="post">
-  <header class="post-header">
-    <div class="category-band category-{{ .Params.category }}"></div>
-    <h1>{{ .Title }}</h1>
-    <div class="post-summary">{{ .Params.summary }}</div>
-    <div class="post-meta">
-      <span class="author">{{ .Params.author | default "트라움자원" }}</span>
-      <span class="date">{{ .Date.Format "2006.01.02" }}</span>
-      <span class="read-time">{{ .ReadingTime }}분</span>
-      {{ with .Params.tags }}
-        <div class="tags">
-          {{ range . }}
-            <span class="tag">{{ . }}</span>
-          {{ end }}
-        </div>
+{{ $cat := .Params.category | default "story" }}
+{{ $labels := dict "market" "시장읽기" "ops" "운영노트" "behind" "비하인드" "story" "이야기" }}
+{{ $catLabel := or (index $labels $cat) "이야기" }}
+
+<!-- 읽기 진행도 바 -->
+<div id="readingProgress" class="reading-progress" aria-hidden="true"></div>
+
+<!-- 포스트 히어로(커버/그라디언트) -->
+<section class="post-hero">
+  <div class="post-hero-bg"
+    {{ with .Params.image }}
+      style="background-image: linear-gradient(135deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.25) 100%), url('{{ . }}'); background-size: cover; background-position: center;"
+    {{ else }}
+      style="background-image: var(--overlay-gradient);"
+    {{ end }}
+  ></div>
+  <div class="post-hero-content">
+    <span class="category-chip">{{ $catLabel }}</span>
+    <h1 class="post-title">{{ .Title }}</h1>
+    {{ with .Params.summary }}<p class="post-sub">{{ . }}</p>{{ end }}
+    <div class="post-meta-chips">
+      <span class="meta-chip">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M5 20h14a1 1 0 001-1V7a1 1 0 00-1-1H5a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
+        {{ .Date.Format "2006.01.02" }}
+      </span>
+      <span class="meta-chip">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 22a10 10 0 110-20 10 10 0 010 20z"/></svg>
+        {{ .ReadingTime }}분 읽기
+      </span>
+      {{ if ne .Lastmod .Date }}
+      <span class="meta-chip">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M12 3v18"/></svg>
+        업데이트 {{ .Lastmod.Format "2006.01.02" }}
+      </span>
       {{ end }}
     </div>
-  </header>
-
-  <div class="post-content">
-    {{ .Content }}
   </div>
+</section>
 
-  {{ if .Params.kpis }}
-    <div class="post-kpis">
-      {{ range .Params.kpis }}
-        <div class="kpi-badge">
-          <span class="kpi-label">{{ .label }}</span>
-          <span class="kpi-value">{{ .value }}</span>
-        </div>
-      {{ end }}
+<!-- 본문 레이아웃: 콘텐츠 + TOC -->
+  <div class="post-layout">
+  <article class="post">
+    <!-- Share Bar -->
+      <div class="post-share" role="group" aria-label="공유 메뉴">
+        <button type="button" class="share-btn share" id="btnWebShare">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 16V3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 8l5-5 5 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>공유</span>
+        </button>
+        <button type="button" class="share-btn outline copy" id="btnCopyLink">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0-7.07-7.07L10 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.07 0L5.5 12.5a5 5 0 0 0 7.07 7.07L14 18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>링크 복사</span>
+        </button>
+        <a class="share-btn outline x" id="btnX" target="_blank" rel="noopener" aria-label="X로 공유">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.243 3H21l-6.545 7.468L22 21h-6.756l-4.448-5.664L6.028 21H3l7.402-8.445L3 3h6.756l4.046 5.164L18.243 3zM16.79 19.5h1.21l-8.82-11h-1.21l8.82 11z"/>
+          </svg>
+          <span>X</span>
+        </a>
+        {{ with .Site.Params.kakao_js_key }}
+        <button type="button" class="share-btn outline kakao" id="btnKakao" aria-label="카카오톡으로 공유">
+          <!-- KakaoTalk 아이콘(말풍선+K) 단색 -->
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3.2c-4.97 0-9 2.98-9 6.65 0 2.48 1.78 4.64 4.43 5.78-.17.64-.61 2.26-.7 2.62-.11.46.17.45.36.33.15-.1 2.37-1.61 3.33-2.26.52.07 1.06.11 1.61.11 4.97 0 9-2.98 9-6.58C21 6.18 16.97 3.2 12 3.2zm-.92 4.17h1.64l1.95 2.4 1.95-2.4h1.64l-2.78 3.39 2.87 3.61h-1.67l-2.01-2.53-2.03 2.53h-1.66l2.87-3.6-2.77-3.4z"/>
+          </svg>
+          <span>카카오톡</span>
+        </button>
+        {{ end }}
+        <a class="share-btn outline linkedin" id="btnLinkedIn" target="_blank" rel="noopener">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 1 1 0 3.5a2.5 2.5 0 0 1 4.98 0zM0 8h5v16H0V8zm7.5 0h4.8v2.2h.1c.7-1.3 2.5-2.7 5-2.7 5.3 0 6.3 3.5 6.3 8.1V24h-5V16.2c0-1.9 0-4.3-2.6-4.3-2.6 0-3 2-3 4.1V24h-5V8z"/></svg>
+          <span>LinkedIn</span>
+        </a>
+        <a class="share-btn outline threads" id="btnThreads" target="_blank" rel="noopener" aria-label="Threads로 공유">
+          <!-- Threads(스레즈) 로고 유사형(단색) -->
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 1.75c-5.66 0-10.25 4.59-10.25 10.25S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zm4.86 9.31c-.23-1.83-1.33-3.06-3.19-3.49-.73-.17-1.55-.21-2.45-.12.14.46.22.96.25 1.48.56-.07 1.03-.04 1.43.06 1.18.28 1.9 1.01 2.05 2.16-.69-.44-1.52-.67-2.48-.67-2.61 0-4.37 1.79-4.37 4.21 0 2.32 1.65 3.86 4.19 3.86 2.06 0 3.56-.91 4.26-2.53.32-.74.49-1.63.49-2.62 0-.12 0-.23-.01-.34-.01-.36-.08-.68-.17-1zm-3.43 3.88c-.32.76-.98 1.16-1.97 1.16-1.2 0-1.93-.65-1.93-1.76 0-1.12.82-1.85 2.1-1.85.82 0 1.48.22 1.93.64-.01.7-.07 1.33-.13 1.81z"/>
+          </svg>
+          <span>Threads</span>
+        </a>
+        <a class="share-btn outline facebook" id="btnFacebook" target="_blank" rel="noopener">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12A10 10 0 1 0 10.5 22v-7H8.3V12h2.2V9.8c0-2.2 1.3-3.4 3.3-3.4.9 0 1.8.1 2.7.3v2.4h-1.5c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>
+          <span>Facebook</span>
+        </a>
+      </div>
+
+    <div class="post-content">
+      {{ .Content }}
     </div>
-  {{ end }}
 
-  {{ if .Params.assets }}
+    {{ with .Params.tags }}
+    <div class="post-tags">
+      {{ range . }}<span class="tag">{{ . }}</span>{{ end }}
+    </div>
+    {{ end }}
+
+    {{ if .Params.assets }}
     <div class="post-assets">
       {{ range .Params.assets }}
-        <a href="{{ .path }}" class="asset-link" download>
-          {{ .title }}
-          <span class="download-icon">⬇</span>
-        </a>
+        <a href="{{ .path }}" class="asset-link" download>{{ .title }}</a>
       {{ end }}
     </div>
-  {{ end }}
-</article>
+    {{ end }}
+  </article>
 
+  {{ with .TableOfContents }}
+  <aside class="post-toc">
+    <div class="toc-title">목차</div>
+    {{ . }}
+  </aside>
+  {{ end }}
+</div>
+
+<!-- 관련 글 -->
 <div class="related-posts">
   <h3>같은 카테고리 글</h3>
   <div class="related-grid">
@@ -54,4 +120,147 @@
     {{ end }}
   </div>
 </div>
+
+<!-- 이전/다음 글 내비게이션 -->
+<nav class="post-nav">
+  {{ with .PrevInSection }}
+  <a class="post-prev" href="{{ .RelPermalink }}">← 이전: {{ .Title }}</a>
+  {{ end }}
+  {{ with .NextInSection }}
+  <a class="post-next" href="{{ .RelPermalink }}">다음: {{ .Title }} →</a>
+  {{ end }}
+</nav>
+
+<!-- 읽기 진행도 스크립트 -->
+  <script>
+    (function(){
+      const bar = document.getElementById('readingProgress');
+    if(!bar) return;
+    function onScroll(){
+      const el = document.querySelector('.post-content');
+      if(!el) return;
+      const rect = el.getBoundingClientRect();
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docTop = el.offsetTop;
+      const total = el.offsetHeight - window.innerHeight;
+      const progress = Math.max(0, Math.min(1, (scrollTop - docTop) / (total || 1)));
+      bar.style.setProperty('--progress', (progress * 100).toFixed(2) + '%');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
+  })();
+  (function(){
+    // UTM 파라미터 부여
+    const base = window.location.href.split('#')[0];
+    const url = base + (base.includes('?') ? '&' : '?') + 'utm_source=social&utm_medium=share&utm_campaign=blog_post';
+    const title = document.title;
+    const $share = document.getElementById('btnWebShare');
+    const $copy = document.getElementById('btnCopyLink');
+    const $x = document.getElementById('btnX');
+    const $li = document.getElementById('btnLinkedIn');
+    const $th = document.getElementById('btnThreads');
+    const $fb = document.getElementById('btnFacebook');
+    const $ka = document.getElementById('btnKakao');
+    if($x){ $x.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(title) + '&url=' + encodeURIComponent(url); }
+    if($li){ $li.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url); }
+    // Threads web intent(현재 net→com 마이그레이션 중, net도 동작). 텍스트에는 제목+URL 포함
+    if($th){ $th.href = 'https://www.threads.net/intent/post?text=' + encodeURIComponent(title + ' ' + url); }
+    if($fb){ $fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url); }
+
+    // KakaoTalk 공유: 키가 있으면 SDK 로드 후 공유, 없으면 버튼 숨김
+    const KAKAO_JS_KEY = '{{ .Site.Params.kakao_js_key }}';
+    (function(){
+      if(!$ka) return;
+      if(!KAKAO_JS_KEY){ $ka.style.display='none'; return; }
+      function ensureSDK(cb){
+        if(window.Kakao){ cb(); return; }
+        const s=document.createElement('script');
+        s.src='https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+        s.onload=cb; document.head.appendChild(s);
+      }
+      function init(){ try{ if(!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_JS_KEY); }catch(e){} }
+      function abs(u){ if(!u) return ''; if(/^https?:\/\//i.test(u)) return u; return location.origin + (u.startsWith('/')?u:('/'+u)); }
+      const imageFallback='{{ .Site.Params.kakao_image_fallback }}';
+      const pageImage='{{ with .Params.image }}{{ . }}{{ end }}';
+      $ka.addEventListener('click', function(){
+        ensureSDK(function(){
+          init();
+          const shareUrl = url; // UTM 포함
+          const desc = document.querySelector('.post-sub')?.innerText || '';
+          const imageUrl = abs(pageImage || imageFallback);
+          if(!imageUrl){
+            alert('카카오 공유에는 대표 이미지가 필요합니다. 글에 image를 설정해 주세요.');
+            return;
+          }
+          try {
+            window.Kakao.Share.sendDefault({
+              objectType: 'feed',
+              content: { title: title, description: desc, imageUrl, link: { webUrl: shareUrl, mobileWebUrl: shareUrl } },
+              buttons: [{ title: '글 보기', link: { webUrl: shareUrl, mobileWebUrl: shareUrl } }]
+            });
+          } catch(e) { console.error(e); }
+        });
+      });
+    })();
+    if($share){
+      $share.addEventListener('click', async function(){
+        if(navigator.share){
+          try{ await navigator.share({ title, url }); }catch(_){/* noop */}
+        } else {
+          $copy?.click();
+        }
+      });
+    }
+    if($copy){
+      $copy.addEventListener('click', async function(){
+        if(!this._originalInnerHTML) this._originalInnerHTML = this.innerHTML;
+        try{
+          await navigator.clipboard.writeText(url);
+          this.innerHTML = '복사됨';
+          setTimeout(()=> { this.innerHTML = this._originalInnerHTML; }, 1500);
+        }catch(_){ window.prompt('URL 복사', url); }
+      });
+    }
+  })();
+
+  // Heading anchors + TOC scrollspy
+  (function(){
+    const content = document.querySelector('.post-content');
+    const toc = document.querySelector('.post-toc');
+    if(!content || !toc) return;
+    const headings = content.querySelectorAll('h2, h3');
+    headings.forEach(h => {
+      if(!h.id){ h.id = h.textContent.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,''); }
+      const a = document.createElement('a'); a.href = '#' + h.id; a.className = 'heading-anchor'; a.textContent = '#'; h.appendChild(a);
+    });
+    const tocLinks = Array.from(toc.querySelectorAll('a[href^="#"]'));
+    const map = new Map(tocLinks.map(a => [a.getAttribute('href').slice(1), a]));
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const id = e.target.id; const link = map.get(id);
+        if(!link) return; link.classList.toggle('active', e.isIntersecting);
+      });
+    }, { rootMargin: '0px 0px -70% 0px', threshold: 0.1 });
+    headings.forEach(h => io.observe(h));
+  })();
+
+  // Code copy buttons
+  (function(){
+    const blocks = document.querySelectorAll('.post-content pre > code');
+    blocks.forEach((code)=>{
+      const pre = code.parentElement;
+      pre.classList.add('code-block');
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label','코드 복사');
+      btn.textContent = '복사';
+      pre.appendChild(btn);
+      btn.addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(code.innerText); btn.textContent='복사됨'; setTimeout(()=> btn.textContent='복사', 1500);}catch(_){/* noop */}
+      });
+    });
+  })();
+  </script>
 {{ end }}

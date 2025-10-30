@@ -4,13 +4,14 @@ Scope: Entire repository.
 
 ## Goals
 - Keep this repo simple: static homepage + static blog with minimal infra.
-- Favor unprivileged containers and loopback binds (no public ports from Compose).
+- Prefer unprivileged containers and loopback binds (no public ports from Compose).
 
-## 언어 원칙
-- 모든 에이전트/도우미의 대화형 응답은 한국어로 합니다.
-- 문서는 한국어를 기본으로 작성합니다(README, OPERATIONS, 가이드 등).
-- 코드 주석은 한국어를 기본으로 하되, 표준 명칭/식별자는 원문(영문) 유지 가능합니다.
-- 외부 문서에서 가져온 고유 용어는 필요 시 영어 병기(예: Conventional Commits 타입/스코프).
+## Language
+- Interactive responses from agents/helpers: Korean (all conversations must be in Korean).
+- Documentation (README, OPERATIONS, guides, PR template): Korean by default.
+- This file (AGENTS.md) is intentionally written in English; other docs remain Korean.
+- Code comments: Korean by default; keep standard identifiers/terms in original English when needed.
+- Borrowed proper nouns/terms from external docs may remain in English (e.g., Conventional Commits type/scope).
 
 ## Do / Don’t
 - Do use `nginxinc/nginx-unprivileged` and expose 8080 only.
@@ -62,7 +63,7 @@ Scope: Entire repository.
 ## Local commands
 - Homepage: `docker compose build web && docker compose up -d web`
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
-- OAuth for Decap CMS: `cd traum_blog`에서 `.env` 설정 후 `docker compose up -d oauth`
+- OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
 
 ## Ports
 - Homepage: 127.0.0.1:17176 → 8080
@@ -81,32 +82,39 @@ Scope: Entire repository.
 
 ## Style / Git
 - Keep README accurate. Update `.env.example` when variables change.
-- 문서는 한국어 기본, 표제/파일명은 상황에 따라 영문 허용.
+- Docs are Korean by default; file names/headings may be English when appropriate.
 - No long-lived feature branches unless necessary.
 
 ## Commit Convention (Conventional Commits)
-- 형식: `type(scope)!: subject`
-  - `type`: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
-  - `scope`(예): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
-  - `subject`: 간결한 한국어 문장(72자 이내, 마침표 생략)
-- 본문(선택): 변경 배경/의도/영향을 한국어로 기술(행 길이 ~72자 권장).
-- 푸터(선택): `Closes #123`, `Refs #456`, 호환깨짐은 `BREAKING CHANGE:`로 기술.
-- 호환깨짐: 스코프 뒤 `!` 표기 + `BREAKING CHANGE:` 푸터에 상세 서술.
-- 되돌리기: `revert: <short-hash> <original subject>` 형식 + 사유 링크.
-- 언어: Subject/Body는 한국어를 기본으로, `type`/`scope` 키워드는 Conventional 표준에 맞춰 영문 사용.
+- Format: `type(scope)!: subject`
+  - `type`: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|content|post|blog`
+  - `scope` (e.g.): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
+  - `subject`: concise English sentence, no trailing period (≤ 200 chars)
+- Body (optional): motivation/impact (wrap at ~72 chars).
+- Footer (optional): `Closes #123`, `Refs #456`; breaking changes via `BREAKING CHANGE:`.
+- Breaking: add `!` after scope and describe in footer.
+- Revert: `revert: <short-hash> <original subject>` with reason link.
 
 Examples
-- `feat(blog): 대표 이미지 지원 추가`
-- `fix(oauth): code 누락 시 400 처리`
-- `docs: OPERATIONS.md 추가 및 README 링크`
-- `ci(web): 배포 워크플로 추가(SSH compose build+up)`
-- `refactor(web): nginx 헤더 템플릿 분리`
-- `chore(deps): hugo 베이스 이미지 업데이트`
-- `revert: 1a2b3c4 fix(oauth): code 누락 시 400 처리`
+- `feat(blog): add archive global search`
+- `fix(oauth): return 400 when code missing`
+- `docs: add OPERATIONS.md and link from README`
+- `ci(web): add deploy workflow (SSH compose build+up)`
+- `refactor(web): extract nginx header templates`
+- `chore(deps): update hugo base image`
+- `revert: 1a2b3c4 fix(oauth): return 400 when code missing`
 
 Granularity
 - One logical change per commit; separate refactors from behavior changes.
 - Squash before merge if PR contains fixup/cleanup commits.
+
+## PR / Review Rules
+- PR title uses Conventional Commits (`type(scope): subject`), subject in English.
+- Use `.github/pull_request_template.md`.
+- Progress updates go to PR comments only. Keep the PR body structure; only tick checkboxes.
+- Do not edit PR body text except checkboxes. Use comments or follow-up commits for explanations.
+- Commitlint: header max 200; otherwise follow Conventional rules.
+- Address review feedback in small commits and summarize in a comment.
 
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
@@ -114,5 +122,5 @@ Granularity
 
 
 ## Commitlint
-- PR에서만 검사합니다(직접 push에는 미적용). 블로그 CMS의 main 직접 커밋/배포에는 영향을 주지 않습니다.
-- 규칙: Conventional Commits(한국어 subject 허용), 상세는 `.commitlintrc.yml` 참고.
+- Runs on PRs only (direct pushes not enforced). Blog CMS direct commits/deploy not affected.
+- Rules: Conventional Commits; header max 200. See `.commitlintrc.yml`.

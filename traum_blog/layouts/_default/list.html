@@ -1,21 +1,26 @@
 {{ define "main" }}
-<div class="category-header">
+{{ if .IsHome }}
+<section class="hero">
+  <div class="hero-bg" style="background-image: linear-gradient(135deg, rgba(26, 79, 52, 0.80) 0%, rgba(74, 157, 111, 0.60) 100%), url('https://images.unsplash.com/photo-1684695747624-0dd1b6412bc1?w=1600&q=80'); background-size: cover; background-position: center;"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">현장, 시장, 운영의 기록</h1>
+    <p class="hero-sub">트라움자원이 현장에서 겪은 경험과 인사이트를 공유합니다.<br>실무에 도움이 되는 살아있는 지식을 만나보세요.</p>
+    <div class="hero-actions">
+      <a href="#latest" class="btn btn-secondary">최신 글 보기</a>
+      <a href="/archive/" class="btn btn-outline">전체 아카이브</a>
+    </div>
+  </div>
+</section>
+{{ end }}
+
+{{ $sec := cond (or .IsHome (eq .Section "archive")) "all" .Section }}
+<div id="latest" class="category-header {{ $sec }}">
   <div class="category-nav">
+    <a href="/archive/" class="nav-item {{ if (or .IsHome (eq .Section "archive")) }}active{{ end }}">전체</a>
     <a href="/market" class="nav-item {{ if eq .Section "market" }}active{{ end }}">시장읽기</a>
     <a href="/ops" class="nav-item {{ if eq .Section "ops" }}active{{ end }}">운영노트</a>
     <a href="/behind" class="nav-item {{ if eq .Section "behind" }}active{{ end }}">비하인드</a>
     <a href="/story" class="nav-item {{ if eq .Section "story" }}active{{ end }}">이야기</a>
-  </div>
-  
-  <div class="filters">
-    <div class="filter-tabs">
-      <button class="tab active">전체</button>
-      <button class="tab">회사</button>
-      <button class="tab">개인</button>
-    </div>
-    <div class="search">
-      <input type="search" placeholder="검색...">
-    </div>
   </div>
 </div>
 

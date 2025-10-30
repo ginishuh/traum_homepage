@@ -1,0 +1,55 @@
+{{ define "main" }}
+<div class="posts-header">
+  <div class="posts-container">
+    <h1 class="posts-title">글 목록</h1>
+    <p class="posts-subtitle">트라움자원의 모든 글을 카테고리별로 살펴보세요</p>
+    
+    <!-- 카테고리 필터 -->
+    <div class="category-filters">
+      <button class="filter-btn active" data-category="all">전체</button>
+      <button class="filter-btn" data-category="market">시장읽기</button>
+      <button class="filter-btn" data-category="ops">운영노트</button>
+      <button class="filter-btn" data-category="behind">비하인드</button>
+      <button class="filter-btn" data-category="story">이야기</button>
+    </div>
+  </div>
+</div>
+
+<div class="posts-grid">
+  {{ range .Paginator.Pages }}
+    {{ $category := .Params.category | default "story" }}
+    <div class="post-item" data-category="{{ $category }}">
+      {{ partial (printf "card-%s.html" $category) . }}
+    </div>
+  {{ end }}
+</div>
+
+{{ partial "pagination.html" . }}
+
+<script>
+  // Category filter functionality
+  (function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const postItems = document.querySelectorAll('.post-item');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const category = this.dataset.category;
+        
+        // Update active button
+        filterBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filter posts
+        postItems.forEach(item => {
+          if (category === 'all' || item.dataset.category === category) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+  })();
+</script>
+{{ end }}

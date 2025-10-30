@@ -8,7 +8,19 @@ enableRobotsTXT = true
 pagerSize = 10
 
 [outputs]
-home = ["HTML", "RSS"]
+home = ["HTML", "RSS", "JSON"]
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+    lineNos = false
+    style = "dracula"
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
 
 [params]
 description = "트라움자원 현장·시장·운영의 기록"
+kakao_js_key = "" # 배포 환경에서는 HUGO_PARAMS_KAKAO_JS_KEY 로 주입 권장
+kakao_image_fallback = "" # 선택: 카카오 공유용 기본 이미지(절대 URL 권장)
