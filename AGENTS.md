@@ -7,9 +7,10 @@ Scope: Entire repository.
 - Prefer unprivileged containers and loopback binds (no public ports from Compose).
 
 ## Language
-- Interactive responses from agents/helpers: Korean (우리 팀 대화는 한국어 유지).
-- Documentation (README, OPERATIONS, guides, PR template): English by default.
-- Code comments: English; keep standard identifiers/terms in their original form when needed.
+- Interactive responses from agents/helpers: Korean (모든 대화는 한국어).
+- Documentation (README, OPERATIONS, guides, PR template): Korean by default.
+- This file (AGENTS.md) is intentionally written in English; other docs remain Korean.
+- Code comments: Korean by default; keep standard identifiers/terms in original English when needed.
 - Borrowed proper nouns/terms from external docs may remain in English (e.g., Conventional Commits type/scope).
 
 ## Do / Don’t
@@ -81,7 +82,7 @@ Scope: Entire repository.
 
 ## Style / Git
 - Keep README accurate. Update `.env.example` when variables change.
-- Docs are English by default; file names/headings may be English or Korean when appropriate.
+- Docs are Korean by default; file names/headings may be English when appropriate.
 - No long-lived feature branches unless necessary.
 
 ## Commit Convention (Conventional Commits)
