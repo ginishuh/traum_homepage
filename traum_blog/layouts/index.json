@@ -7,10 +7,9 @@
     "title": {{ $p.Title | jsonify }},
     "summary": {{ (cond (isset $p.Params "summary") $p.Params.summary $p.Summary) | plainify | htmlUnescape | jsonify }},
     "url": {{ $p.RelPermalink | jsonify }},
-    "date": "{{ $p.Date.Format "yyyy-MM-dd" }}",
+    "date": "{{ $p.Date.Format "2006-01-02" }}",
     "category": {{ ($p.Params.category | default "story") | jsonify }},
     "tags": {{ ( $p.Params.tags | default (slice) ) | jsonify }}
   }
 {{- end -}}
 ]
-
