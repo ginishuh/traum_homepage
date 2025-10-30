@@ -12,6 +12,7 @@
   /* Colors - Text */
   --color-text: #333333;
   --color-text-muted: #666666;
+  --color-text-secondary: #555555;
   
   /* Colors - Background */
   --color-bg: #F8F9FA;
@@ -79,6 +80,8 @@
   --bg-light: var(--color-bg);
   --bg-white: var(--color-surface);
   --shadow: var(--shadow-base);
+  /* 레거시 컬러 토큰 호환 */
+  --color-text-main: var(--color-text);
 }
 
 /* Base Typography */
