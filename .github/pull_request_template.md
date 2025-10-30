@@ -1,38 +1,37 @@
 <!--
-PR 제목은 Conventional Commits 형식으로 작성하세요.
-예) feat(blog): 아카이브 전역 검색 추가
+Use Conventional Commits in the PR title.
+Example: feat(blog): add archive global search
 
-중요: 진행상황 업데이트는 PR 코멘트로 남깁니다.
-아래 본문은 템플릿 구조를 유지하고, 체크박스만 필요할 때 체크하세요.
+Important: progress updates go to PR comments only.
+Keep this body structure; only check the boxes below.
 -->
 
-## 개요
-- 변경 목적을 한 문장으로 요약해 주세요.
+## Summary
+- One-line purpose of this change.
 
-## 변경 사항
-- 무엇이 어떻게 바뀌었는지 핵심만 (불릿)
+## Changes
+- Key changes (bullets)
 
-## 스크린샷/동작 확인(옵션)
-- before/after 또는 GIF 첨부
+## Screenshots/Verification (optional)
+- before/after or GIF
 
-## 검증 방법
-- 로컬 재현/검증 절차
+## How to test
+- Local reproduction/verification steps
 
-## 배포 영향
-- 마이그레이션/환경변수/비호환 변경 여부
+## Deployment impact
+- Migrations/env vars/breaking changes
 
-## 관련 이슈/참고
+## Related
 - Closes #
 - Refs #
 
 ---
 
-## 체크리스트(본문은 수정하지 말고 체크만)
-- [ ] 디자인 시안/토큰 반영 확인
-- [ ] 접근성/키보드 포커스 확인
-- [ ] 브라우저 확인(크롬/사파리/모바일)
-- [ ] commitlint/CI 통과
-- [ ] 문서(README/AGENTS/OPERATIONS) 업데이트
+## Checklist (check only; do not rewrite body)
+- [ ] Design tokens/spec reflected
+- [ ] Accessibility/keyboard focus checked
+- [ ] Browser check (Chrome/Safari/Mobile)
+- [ ] commitlint/CI passing
+- [ ] Docs updated (README/AGENTS/OPERATIONS)
 
-<!-- 진행상황은 코멘트로만 남겨 주세요. 본문 텍스트 편집 금지 -->
-
+<!-- Progress belongs in comments. Do not edit this body except checkboxes. -->
