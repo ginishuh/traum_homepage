@@ -7,7 +7,7 @@ Scope: Entire repository.
 - Prefer unprivileged containers and loopback binds (no public ports from Compose).
 
 ## Language
-- Interactive responses from agents/helpers: Korean (모든 대화는 한국어).
+- Interactive responses from agents/helpers: Korean (all conversations must be in Korean).
 - Documentation (README, OPERATIONS, guides, PR template): Korean by default.
 - This file (AGENTS.md) is intentionally written in English; other docs remain Korean.
 - Code comments: Korean by default; keep standard identifiers/terms in original English when needed.
