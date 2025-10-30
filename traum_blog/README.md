@@ -27,6 +27,15 @@ docker compose build --no-cache blog && docker compose up -d blog
 ```
 > 배포 시에도 스태틱 파일은 30일 캐시/immutable입니다. 템플릿의 CSS 링크에 버전 쿼리(`?v=yyyymmdd`)를 갱신해 배포하세요.
 
+### Decap CMS 스크립트 업데이트
+- 관리자 UI는 `static/admin/decap-cms.js`와 `static/admin/decap-cms.js.LICENSE.txt`(레포에 커밋된 파일)를 그대로 서빙합니다.
+- 새 버전으로 갱신하려면 다음 명령을 실행한 뒤 변경분을 커밋하세요.
+  ```bash
+  curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js -o static/admin/decap-cms.js
+  curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js.LICENSE.txt -o static/admin/decap-cms.js.LICENSE.txt
+  ```
+- 버전 업그레이드 시에는 위 URL의 버전을 원하는 릴리즈로 바꾸고, `layouts/_default/baseof.html`의 CSS/JS 쿼리 스트링도 함께 갱신하세요.
+
 ## 운영(VPS)
 1) GitHub OAuth App 생성
    - Homepage URL: https://blog.trr.co.kr
