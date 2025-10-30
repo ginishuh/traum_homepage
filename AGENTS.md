@@ -108,6 +108,14 @@ Granularity
 - One logical change per commit; separate refactors from behavior changes.
 - Squash before merge if PR contains fixup/cleanup commits.
 
+## PR / 리뷰 운영 원칙
+- PR 제목: Conventional Commits(`type(scope): subject`) 사용, subject는 한국어.
+- PR 템플릿: `.github/pull_request_template.md` 사용 필수.
+- 진행상황 보고: PR “코멘트”로만 남깁니다. 본문은 템플릿 구조를 유지하고 “체크박스만” 업데이트합니다.
+- 체크박스 외 본문 텍스트 수정 금지. 설명 변경이 필요하면 코멘트 또는 추가 커밋 설명으로 남깁니다.
+- 커밋 린트: 헤더 길이 최대 200자, 나머지 규칙은 Conventional 표준 준수.
+- 리뷰 대응: 리뷰 지적사항은 작은 단위 커밋으로 반영하고, 반영 내역을 코멘트로 묶어 요약합니다.
+
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
 - Port conflicts: adjust `.env` ports; keep loopback binds.
