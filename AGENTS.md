@@ -65,6 +65,14 @@ Scope: Entire repository.
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
 
+## Build/Cache
+- Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).
+  - Blog (local): `cd traum_blog && docker compose build --no-cache blog && docker compose up -d blog`
+  - Web  (local): `docker compose build --no-cache web && docker compose up -d web`
+- When deploying styles/scripts, bump query-string versions in templates (e.g., `/css/blog.css?v=YYYYMMDD`).
+- After changing `traum_blog/.env`, recreate only the OAuth container to apply new secrets/scopes:
+  - `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`
+
 ## Ports
 - Homepage: 127.0.0.1:17176 → 8080
 - Blog:     127.0.0.1:17177 → 8080

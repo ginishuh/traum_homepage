@@ -3,10 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
     <title>트라움자원 필드노트 Admin</title>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </head>
   <body>
     <!-- Decap CMS mounts automatically when config.yml is present -->
+    <div id="nc-root"></div>
+    <!-- DOM 파싱 완료 후 실행되도록 body 끝에 defer 로 삽입 -->
+    <script src="/admin/decap-cms.js" defer></script>
   </body>
 </html>

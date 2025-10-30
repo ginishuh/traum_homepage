@@ -2,7 +2,7 @@ backend:
   name: github
   repo: ginishuh/traum_homepage
   branch: main
-  base_url: https://blog.trr.co.kr/oauth
+  base_url: /oauth
   auth_endpoint: auth
 
 publish_mode: editorial_workflow

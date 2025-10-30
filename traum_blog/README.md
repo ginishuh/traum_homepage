@@ -18,6 +18,15 @@ docker compose up -d oauth
 # Admin UI (Decap) 정적 파일: http://localhost:17177/admin/
 ```
 
+### 캐시 없이 빌드(중요)
+- Decap CMS 스크립트/스타일 변경 시 로컬/브라우저 캐시가 강함(immutable)
+- 아래처럼 항상 `--no-cache`로 빌드하거나, CSS 링크에 버전 쿼리를 갱신하세요.
+```bash
+cd traum_blog
+docker compose build --no-cache blog && docker compose up -d blog
+```
+> 배포 시에도 스태틱 파일은 30일 캐시/immutable입니다. 템플릿의 CSS 링크에 버전 쿼리(`?v=yyyymmdd`)를 갱신해 배포하세요.
+
 ## 운영(VPS)
 1) GitHub OAuth App 생성
    - Homepage URL: https://blog.trr.co.kr
@@ -66,6 +75,11 @@ server {
 - 접근: https://blog.trr.co.kr/admin/
 - GitHub 로그인 → repo에 글(.md) 커밋/PR(편집 워크플로) 발생
 - 설정: `static/admin/config.yml`
+- .env 변경 시 OAuth 컨테이너 재생성 필요:
+```bash
+cd traum_blog && docker compose up -d --force-recreate --no-deps oauth
+```
+ - GitHub 권한 스코프를 변경했다면, GitHub > Settings > Applications > Authorized OAuth Apps에서 기존 승인을 Revoke 후 다시 로그인하세요.
 
 ## 폴더 구조
 ```

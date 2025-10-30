@@ -8,6 +8,7 @@ const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const REDIRECT_URL = process.env.OAUTH_REDIRECT_URL; // e.g., https://blog.trr.co.kr/oauth/callback
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const DEV_ALLOW_ALL_ORIGINS = process.env.DEV_ALLOW_ALL_ORIGINS === '1';
 const GITHUB_SCOPE = process.env.GITHUB_SCOPE || 'repo';
 
 function htmlPostMessage(targetOrigin, payload) {
@@ -58,8 +59,8 @@ app.get('/callback', async (req, res) => {
     if (!tokenJson.access_token) {
       return res.status(401).send('OAuth failed');
     }
-    // targetOrigin: 첫 번째 허용 도메인 또는 '*'
-    const origin = ALLOWED_ORIGINS[0] || '*';
+    // targetOrigin: 개발 편의를 위해 DEV_ALLOW_ALL_ORIGINS=1이면 '*' 사용
+    const origin = DEV_ALLOW_ALL_ORIGINS ? '*' : (ALLOWED_ORIGINS[0] || '*');
     const payload = { token: tokenJson.access_token, provider: 'github' };
     res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; connect-src 'none';");
     res.send(htmlPostMessage(origin, payload));
