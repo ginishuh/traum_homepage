@@ -29,9 +29,10 @@
         
         <!-- Desktop Navigation -->
         <nav class="desktop-nav">
-          <a href="/" class="nav-link active">홈</a>
-          <a href="/posts/" class="nav-link">글 목록</a>
-          <a href="/about/" class="nav-link">소개</a>
+          <a href="/" class="nav-link {{ if .IsHome }}active{{ end }}">홈</a>
+          <a href="/archive/" class="nav-link {{ if or (eq .Section "archive") (eq .RelPermalink "/archive/") }}active{{ end }}">글 목록</a>
+          <a href="/about/" class="nav-link {{ if or (eq .Section "about") (eq .RelPermalink "/about/") }}active{{ end }}">소개</a>
+          <a href="/admin/" class="nav-link">관리자</a>
         </nav>
 
         <!-- Mobile Hamburger -->
@@ -55,9 +56,10 @@
             </button>
           </div>
           <div class="mobile-menu-links">
-            <a href="/" class="mobile-nav-link">홈</a>
-            <a href="/posts/" class="mobile-nav-link">글 목록</a>
-            <a href="/about/" class="mobile-nav-link">소개</a>
+            <a href="/" class="mobile-nav-link {{ if .IsHome }}active{{ end }}">홈</a>
+            <a href="/archive/" class="mobile-nav-link {{ if or (eq .Section "archive") (eq .RelPermalink "/archive/") }}active{{ end }}">글 목록</a>
+            <a href="/about/" class="mobile-nav-link {{ if or (eq .Section "about") (eq .RelPermalink "/about/") }}active{{ end }}">소개</a>
+            <a href="/admin/" class="mobile-nav-link">관리자</a>
           </div>
         </nav>
       </div>

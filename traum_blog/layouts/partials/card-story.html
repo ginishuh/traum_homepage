@@ -1,4 +1,4 @@
-<div class="card card-story">
+<div class="card card-story" data-category="story" data-text="이야기 {{ .Title }} {{ .Params.summary }} {{ delimit (.Params.tags | default (slice)) " " }}">
   <div class="card-color-band"></div>
   
   {{ with .Params.image }}

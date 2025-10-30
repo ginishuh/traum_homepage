@@ -1,4 +1,4 @@
-<div class="card card-market">
+<div class="card card-market" data-category="market" data-text="시장읽기 {{ .Title }} {{ .Params.summary }} {{ delimit (.Params.tags | default (slice)) " " }}">
   <div class="card-color-band"></div>
   
   {{ with .Params.image }}

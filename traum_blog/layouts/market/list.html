@@ -1,0 +1,61 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="hero-bg" style="background-image: linear-gradient(135deg, rgba(45, 109, 223, 0.80) 0%, rgba(96, 165, 250, 0.60) 100%), url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&q=80'); background-size: cover; background-position: center;"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">시장읽기</h1>
+    <p class="hero-sub">시장 동향과 인사이트를 깊이 있게 분석합니다.<br>데이터 기반의 시장 이해를 통해 현장에 적용할 수 있는 지식을 제공합니다.</p>
+    <div class="hero-actions">
+      <a href="#latest" class="btn btn-secondary">최신 글 보기</a>
+      <a href="/posts" class="btn btn-outline">전체 글 목록</a>
+    </div>
+  </div>
+</section>
+
+<div id="latest" class="category-header">
+  <div class="category-nav">
+    <a href="/" class="nav-item">전체</a>
+    <a href="/market" class="nav-item active">시장읽기</a>
+    <a href="/ops" class="nav-item">운영노트</a>
+    <a href="/behind" class="nav-item">비하인드</a>
+    <a href="/story" class="nav-item">이야기</a>
+  </div>
+</div>
+
+<div class="posts-grid">
+  {{ range .Paginator.Pages }}
+    <div class="card card-market">
+      <div class="card-color-band"></div>
+      
+      {{ with .Params.image }}
+      <img src="{{ . }}" alt="{{ $.Title }}" class="card-image" loading="lazy">
+      {{ end }}
+      
+      <div class="card-content">
+        <div class="card-category">시장읽기</div>
+        <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        <div class="card-summary">{{ .Params.summary }}</div>
+        
+        {{ with .Params.kpis }}
+        <div class="kpis-mini">
+          {{ range . }}
+          <div class="kpi-mini">
+            <span class="kpi-label">{{ .label }}</span>
+            <span class="kpi-value">{{ .value }}</span>
+          </div>
+          {{ end }}
+        </div>
+        {{ end }}
+        
+        <div class="card-meta">
+          <span class="date">{{ .Date.Format "2006.01.02" }}</span>
+          {{ if .Params.tags }}
+          <span class="tag">{{ index .Params.tags 0 }}</span>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  {{ end }}
+</div>
+
+{{ partial "pagination.html" . }}
+{{ end }}

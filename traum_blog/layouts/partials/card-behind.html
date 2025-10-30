@@ -1,4 +1,4 @@
-<div class="card card-behind">
+<div class="card card-behind" data-category="behind" data-text="비하인드 {{ .Title }} {{ .Params.summary }} {{ delimit (.Params.tags | default (slice)) " " }}">
   <div class="card-color-band"></div>
   
   {{ with .Params.image }}

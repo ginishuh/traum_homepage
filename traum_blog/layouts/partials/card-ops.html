@@ -1,4 +1,4 @@
-<div class="card card-ops">
+<div class="card card-ops" data-category="ops" data-text="운영노트 {{ .Title }} {{ .Params.summary }} {{ delimit (.Params.tags | default (slice)) " " }}">
   <div class="card-color-band"></div>
   
   {{ with .Params.image }}

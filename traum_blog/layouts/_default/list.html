@@ -7,15 +7,16 @@
     <p class="hero-sub">트라움자원이 현장에서 겪은 경험과 인사이트를 공유합니다.<br>실무에 도움이 되는 살아있는 지식을 만나보세요.</p>
     <div class="hero-actions">
       <a href="#latest" class="btn btn-secondary">최신 글 보기</a>
-      <a href="/story" class="btn btn-outline">전체 아카이브</a>
+      <a href="/archive/" class="btn btn-outline">전체 아카이브</a>
     </div>
   </div>
 </section>
 {{ end }}
 
-<div id="latest" class="category-header">
+{{ $sec := cond (or .IsHome (eq .Section "archive")) "all" .Section }}
+<div id="latest" class="category-header {{ $sec }}">
   <div class="category-nav">
-    <a href="/" class="nav-item {{ if .IsHome }}active{{ end }}">전체</a>
+    <a href="/archive/" class="nav-item {{ if (or .IsHome (eq .Section "archive")) }}active{{ end }}">전체</a>
     <a href="/market" class="nav-item {{ if eq .Section "market" }}active{{ end }}">시장읽기</a>
     <a href="/ops" class="nav-item {{ if eq .Section "ops" }}active{{ end }}">운영노트</a>
     <a href="/behind" class="nav-item {{ if eq .Section "behind" }}active{{ end }}">비하인드</a>

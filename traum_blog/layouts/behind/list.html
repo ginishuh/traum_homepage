@@ -1,0 +1,57 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="hero-bg" style="background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.80) 0%, rgba(52, 211, 153, 0.60) 100%), url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80'); background-size: cover; background-position: center;"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">비하인드</h1>
+    <p class="hero-sub">개발 과정과 기술적 의사결정을 투명하게 공유합니다.<br>코드 뒤에 숨겨진 생각과 고민들을 들여다보세요.</p>
+    <div class="hero-actions">
+      <a href="#latest" class="btn btn-secondary">최신 글 보기</a>
+      <a href="/posts" class="btn btn-outline">전체 글 목록</a>
+    </div>
+  </div>
+</section>
+
+<div id="latest" class="category-header">
+  <div class="category-nav">
+    <a href="/" class="nav-item">전체</a>
+    <a href="/market" class="nav-item">시장읽기</a>
+    <a href="/ops" class="nav-item">운영노트</a>
+    <a href="/behind" class="nav-item active">비하인드</a>
+    <a href="/story" class="nav-item">이야기</a>
+  </div>
+</div>
+
+<div class="posts-grid">
+  {{ range .Paginator.Pages }}
+    <div class="card card-behind">
+      <div class="card-color-band"></div>
+      
+      {{ with .Params.image }}
+      <img src="{{ . }}" alt="{{ $.Title }}" class="card-image" loading="lazy">
+      {{ end }}
+      
+      <div class="card-content">
+        <div class="card-category">비하인드</div>
+        <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        <div class="card-summary">{{ .Params.summary }}</div>
+        
+        {{ with .Params.timeline }}
+        <div class="timeline-badge">
+          <div class="timeline-dot"></div>
+          <span>{{ . }}</span>
+        </div>
+        {{ end }}
+        
+        <div class="card-meta">
+          <span class="date">{{ .Date.Format "2006.01.02" }}</span>
+          {{ if .Params.tags }}
+          <span class="tag">{{ index .Params.tags 0 }}</span>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  {{ end }}
+</div>
+
+{{ partial "pagination.html" . }}
+{{ end }}

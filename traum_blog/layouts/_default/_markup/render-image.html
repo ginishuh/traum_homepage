@@ -1,0 +1,21 @@
+{{- $alt := .Text -}}
+{{- $src := .Destination | safeURL -}}
+{{- $title := .Title | default "" -}}
+
+{{- $class := slice -}}
+{{- if (in $title "{wide}") -}}
+  {{- $class = $class | append "figure-wide" -}}
+  {{- $title = replace $title "{wide}" "" -}}
+{{- end -}}
+{{- if (in $title "{bleed}") -}}
+  {{- $class = $class | append "figure-bleed" -}}
+  {{- $title = replace $title "{bleed}" "" -}}
+{{- end -}}
+{{- $className := (delimit $class " ") -}}
+
+<figure{{ with $className }} class="{{ . }}"{{ end }}>
+  <img src="{{ $src }}" alt="{{ $alt }}" loading="lazy" />
+  {{- with (trim $title) -}}
+  <figcaption>{{ . }}</figcaption>
+  {{- end -}}
+</figure>

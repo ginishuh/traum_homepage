@@ -1,0 +1,71 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="hero-bg" style="background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.80) 0%, rgba(251, 191, 36, 0.60) 100%), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1600&q=80'); background-size: cover; background-position: center;"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">운영노트</h1>
+    <p class="hero-sub">실무 운영에서 얻은 노하우와 체크리스트를 공유합니다.<br>더 효율적인 운영을 위한 실용적인 가이드를 만나보세요.</p>
+    <div class="hero-actions">
+      <a href="#latest" class="btn btn-secondary">최신 글 보기</a>
+      <a href="/posts" class="btn btn-outline">전체 글 목록</a>
+    </div>
+  </div>
+</section>
+
+<div id="latest" class="category-header">
+  <div class="category-nav">
+    <a href="/" class="nav-item">전체</a>
+    <a href="/market" class="nav-item">시장읽기</a>
+    <a href="/ops" class="nav-item active">운영노트</a>
+    <a href="/behind" class="nav-item">비하인드</a>
+    <a href="/story" class="nav-item">이야기</a>
+  </div>
+</div>
+
+<div class="posts-grid">
+  {{ range .Paginator.Pages }}
+    <div class="card card-ops">
+      <div class="card-color-band"></div>
+      
+      {{ with .Params.image }}
+      <img src="{{ . }}" alt="{{ $.Title }}" class="card-image" loading="lazy">
+      {{ end }}
+      
+      <div class="card-content">
+        <div class="card-category">운영노트</div>
+        <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        <div class="card-summary">{{ .Params.summary }}</div>
+        
+        {{ with .Params.checklist }}
+        <div class="checklist-preview">
+          {{ range first 2 . }}
+          <div class="checklist-item">
+            <div class="checklist-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span>{{ . }}</span>
+          </div>
+          {{ end }}
+        </div>
+        {{ end }}
+        
+        {{ if .Params.downloadable }}
+        <div style="margin-bottom: 1rem;">
+          <span class="tag" style="background: var(--color-category-ops); color: #fff;">다운로드 가능</span>
+        </div>
+        {{ end }}
+        
+        <div class="card-meta">
+          <span class="date">{{ .Date.Format "2006.01.02" }}</span>
+          {{ if .Params.tags }}
+          <span class="tag">{{ index .Params.tags 0 }}</span>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  {{ end }}
+</div>
+
+{{ partial "pagination.html" . }}
+{{ end }}
