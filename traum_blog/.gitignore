@@ -1,3 +1,6 @@
 .env
 public/
 .hugo_build.lock
+
+# Decap CMS config (환경별로 다름)
+static/admin/config.yml
