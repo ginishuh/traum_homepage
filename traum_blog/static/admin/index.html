@@ -9,7 +9,24 @@
   <body>
     <!-- Decap CMS mounts automatically when config.yml is present -->
     <div id="nc-root"></div>
+    <script>
+      // CMS를 수동 초기화해 로컬/운영별 설정 파일을 자동으로 선택한다
+      window.CMS_MANUAL_INIT = true;
+    </script>
     <!-- DOM 파싱 완료 후 실행되도록 body 끝에 defer 로 삽입 -->
     <script src="/admin/decap-cms.js" defer></script>
+    <script defer>
+      const initCMS = () => {
+        const host = window.location.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+        const configPath = isLocal ? '/admin/config.dev.yml' : '/admin/config.yml';
+        window.CMS.init({ configPath });
+      };
+      if (window.CMS) {
+        initCMS();
+      } else {
+        window.addEventListener('CMSLoaded', initCMS, { once: true });
+      }
+    </script>
   </body>
 </html>

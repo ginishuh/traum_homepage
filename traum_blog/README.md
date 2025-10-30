@@ -16,6 +16,7 @@ docker compose build blog && docker compose up -d blog
 # (선택) OAuth 서버
 docker compose up -d oauth
 # Admin UI (Decap) 정적 파일: http://localhost:17177/admin/
+#  - 로컬/운영을 자동으로 판별해 `/admin/config.dev.yml` 또는 `/admin/config.yml` 설정을 불러옵니다.
 ```
 
 ### 캐시 없이 빌드(중요)
@@ -35,6 +36,7 @@ docker compose build --no-cache blog && docker compose up -d blog
   curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js.LICENSE.txt -o static/admin/decap-cms.js.LICENSE.txt
   ```
 - 버전 업그레이드 시에는 위 URL의 버전을 원하는 릴리즈로 바꾸고, `layouts/_default/baseof.html`의 CSS/JS 쿼리 스트링도 함께 갱신하세요.
+- OAuth 리다이렉트/토큰 수신은 **호스트명이 동일해야** 하므로, 로컬 테스트 시 반드시 `http://localhost:17177/admin/`으로 접속하세요.
 
 ## 운영(VPS)
 1) GitHub OAuth App 생성
