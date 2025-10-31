@@ -1,5 +1,6 @@
 # Build stage: Hugo extended image to generate static site
-FROM klakegg/hugo:ext-alpine AS builder
+# (use GHCR mirror to avoid Docker Hub TLS timeouts observed on VPS)
+FROM ghcr.io/gohugoio/hugo:0.147.6 AS builder
 WORKDIR /src
 COPY . .
 ARG HUGO_ENV=production
