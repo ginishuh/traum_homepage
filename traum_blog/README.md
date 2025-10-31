@@ -15,8 +15,8 @@ cd traum_blog
 docker compose build blog && docker compose up -d blog
 # (선택) OAuth 서버
 docker compose up -d oauth
-# Admin UI (Decap) 정적 파일: http://localhost:17177/admin/
-#  - 로컬/운영을 자동으로 판별해 `/admin/config.dev.yml` 또는 `/admin/config.yml` 설정을 불러옵니다.
+# Admin UI (Decap): http://localhost:17177/admin/?config=config.dev.yml
+#  - 운영 배포(https://blog.trr.co.kr/admin/)는 기본 config.yml을 사용합니다.
 ```
 
 ### 캐시 없이 빌드(중요)

@@ -28,8 +28,8 @@
         replay();
         // storage 이벤트로 다른 윈도우에서 저장되었을 때도 감지
         try { window.addEventListener('storage', function(e){ if (e.key === K) replay(); }, false); } catch(_){}
-        // 혹시 몰라 3초/6초/10초 뒤 추가 확인
-        [3000, 6000, 10000].forEach(function(ms){ setTimeout(replay, ms); });
+        // 혹시 몰라 1.5초/3초/6초/10초 뒤 추가 확인
+        [1500, 3000, 6000, 10000].forEach(function(ms){ setTimeout(replay, ms); });
       })();
     </script>
   </body>

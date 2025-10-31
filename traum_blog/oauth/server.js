@@ -32,16 +32,46 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
     }
     function successTo(origin){
       if (!window.opener) return;
+      var target = origin;
+      if (target !== '*' && parentOrigin && target !== parentOrigin) {
+        target = parentOrigin;
+      }
       var msg = 'authorization:' + (data.provider||'github') + ':success:' + JSON.stringify(data);
       // 문자열 프로토콜(구버전 호환)
-      try { window.opener.postMessage(msg, origin); } catch(e) {}
+      try { window.opener.postMessage(msg, target); } catch(e) {}
       // 객체 프로토콜(일부 버전 호환)
-      try { window.opener.postMessage({ type: 'authorization', provider: (data.provider||'github'), token: data.token }, origin); } catch(e) {}
+      try {
+        window.opener.postMessage({ type: 'authorization', provider: (data.provider||'github'), token: data.token, access_token: data.access_token || data.token, state: data.state }, target);
+      } catch(e) {}
+      // 세션 nonce 유지(일부 브라우저에서 popup 종료 시 사라지는 경우 대비)
+      try {
+        if (data.state) {
+          window.opener.sessionStorage.setItem('decap-cms-auth', JSON.stringify({ nonce: data.state }));
+        }
+      } catch(_){ }
       // 로컬스토리지 직접 주입(최후 수단: 일부 CMS 버전 호환성 문제 우회)
       try {
         var user = { token: data.token, backendName: (data.provider||'github') };
-        window.opener.localStorage.setItem('netlify-cms-user', JSON.stringify(user));
+        var serialized = JSON.stringify(user);
+        window.opener.localStorage.setItem('decap-cms-user', serialized);
+        window.opener.localStorage.setItem('netlify-cms-user', serialized);
       } catch (e) {}
+      // 해시 기반 암시적 플로우를 사용하는 테마 호환: access_token을 URL 해시에 주입 후 알림
+      try {
+        if (data && data.token && window.opener && window.opener.location) {
+          var openerLoc = window.opener.location;
+          var baseHref = openerLoc.href.split('#')[0];
+          var hashParts = ['access_token=' + encodeURIComponent(data.token)];
+          if (data.state) hashParts.push('state=' + encodeURIComponent(data.state));
+          hashParts.push('token_type=bearer');
+          hashParts.push('provider=' + encodeURIComponent(data.provider || 'github'));
+          hashParts.push('expires_in=3600');
+          hashParts.push('scope=' + encodeURIComponent('repo public_repo read:user'));
+          var hash = '#' + hashParts.join('&');
+          try { openerLoc.hash = hash; } catch(_) { openerLoc.href = baseHref + hash; }
+          try { window.opener.dispatchEvent(new HashChangeEvent('hashchange')); } catch(_ignore) {}
+        }
+      } catch (_hashErr) {}
       console.log('[OAuth] success posted to', origin);
       if (${autoClose}) setTimeout(function(){ try{ window.close(); }catch(e){} }, 400);
     }
@@ -80,6 +110,13 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
 
 app.get('/auth', (req, res) => {
   const state = req.query.state || '';
+  // 테스트 모드: 실제 GitHub로 리디렉션하지 않고 즉시 성공 postMessage를 전송
+  if (req.query.test === '1' || process.env.OAUTH_TEST_MODE === '1') {
+    console.log('OAuth TEST mode: issuing fake token');
+    const payload = { token: 'gho_test_token', access_token: 'gho_test_token', provider: 'github', state };
+    res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none';");
+    return res.send(htmlPostMessage(ALLOWED_ORIGINS, DEV_ALLOW_ALL_ORIGINS, payload));
+  }
   console.log('OAuth auth request:', { state });
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', CLIENT_ID);
