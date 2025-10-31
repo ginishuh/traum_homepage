@@ -8,7 +8,7 @@
   </head>
   <body>
     <!-- Decap CMS mounts automatically when config.yml is present -->
-    <script src="/admin/decap-cms.js?v=20251031"></script>
+    <script src="/admin/decap-cms.js?v=20251031-2"></script>
     <script>
       // OAuth 폴백: 팝업이 토큰을 localStorage에 남겼다면, 메인 창에서 CMS가 읽을 수 있도록
       (function(){
@@ -17,7 +17,7 @@
           try {
             var t = localStorage.getItem(K);
             if (t) {
-              var msg = 'authorization:github:success:' + JSON.stringify({ token: t, provider: 'github' });
+              var msg = 'authorization:github:success:' + JSON.stringify({ token: t, access_token: t, provider: 'github' });
               window.postMessage(msg, window.location.origin);
               localStorage.removeItem(K);
               console.log('[admin] replayed oauth token from localStorage');

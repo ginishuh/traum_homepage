@@ -123,7 +123,7 @@ app.get('/callback', async (req, res) => {
       console.error('OAuth failed: no access_token in response');
       return res.status(401).send('OAuth failed');
     }
-    const payload = { token: tokenJson.access_token, provider: 'github' };
+    const payload = { token: tokenJson.access_token, access_token: tokenJson.access_token, provider: 'github', state };
     // 최소한의 CSP만 부여. 인라인 스크립트/스타일 허용(디버그 텍스트용), 외부 연결 차단.
     res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none';");
     res.send(htmlPostMessage(ALLOWED_ORIGINS, DEV_ALLOW_ALL_ORIGINS, payload));
