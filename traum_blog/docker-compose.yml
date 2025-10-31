@@ -1,6 +1,9 @@
 services:
   blog:
-    build: .
+    build:
+      context: .
+      args:
+        HUGO_ENV: development
     image: traum/blog:local
     container_name: traum-blog
     ports:

@@ -11,12 +11,34 @@
 ## 빠른 시작(로컬)
 ```bash
 cd traum_blog
+# CMS config (local)
+cp static/admin/config.dev.yml static/admin/config.yml
 # 정적 빌드 이미지(운영과 동일 경로)
 docker compose build blog && docker compose up -d blog
 # (선택) OAuth 서버
 docker compose up -d oauth
-# Admin UI (Decap) 정적 파일: http://localhost:17177/admin/
+# Admin UI (Decap): http://localhost:17177/admin/
+#  - 운영 배포 전에는 static/admin/config.prod.yml을 config.yml로 복사하세요.
 ```
+
+### 캐시 없이 빌드(중요)
+- Decap CMS 스크립트/스타일 변경 시 로컬/브라우저 캐시가 강함(immutable)
+- 아래처럼 항상 `--no-cache`로 빌드하거나, CSS 링크에 버전 쿼리를 갱신하세요.
+```bash
+cd traum_blog
+docker compose build --no-cache blog && docker compose up -d blog
+```
+> 배포 시에도 스태틱 파일은 30일 캐시/immutable입니다. 템플릿의 CSS 링크에 버전 쿼리(`?v=yyyymmdd`)를 갱신해 배포하세요.
+
+### Decap CMS 스크립트 업데이트
+- 관리자 UI는 `static/admin/decap-cms.js`와 `static/admin/decap-cms.js.LICENSE.txt`(레포에 커밋된 파일)를 그대로 서빙합니다.
+- 새 버전으로 갱신하려면 다음 명령을 실행한 뒤 변경분을 커밋하세요.
+  ```bash
+  curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js -o static/admin/decap-cms.js
+  curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js.LICENSE.txt -o static/admin/decap-cms.js.LICENSE.txt
+  ```
+- 버전 업그레이드 시에는 위 URL의 버전을 원하는 릴리즈로 바꾸고, `layouts/_default/baseof.html`의 CSS/JS 쿼리 스트링도 함께 갱신하세요.
+- OAuth 리다이렉트/토큰 수신은 **호스트명이 동일해야** 하므로, 로컬 테스트 시 반드시 `http://localhost:17177/admin/`으로 접속하세요.
 
 ## 운영(VPS)
 1) GitHub OAuth App 생성
@@ -66,6 +88,13 @@ server {
 - 접근: https://blog.trr.co.kr/admin/
 - GitHub 로그인 → repo에 글(.md) 커밋/PR(편집 워크플로) 발생
 - 설정: `static/admin/config.yml`
+  - 로컬: `cp static/admin/config.dev.yml static/admin/config.yml`
+  - 운영: `cp static/admin/config.prod.yml static/admin/config.yml`
+- .env 변경 시 OAuth 컨테이너 재생성 필요:
+```bash
+cd traum_blog && docker compose up -d --force-recreate --no-deps oauth
+```
+ - GitHub 권한 스코프를 변경했다면, GitHub > Settings > Applications > Authorized OAuth Apps에서 기존 승인을 Revoke 후 다시 로그인하세요.
 
 ## 폴더 구조
 ```

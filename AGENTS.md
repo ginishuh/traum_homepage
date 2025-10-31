@@ -64,6 +64,18 @@ Scope: Entire repository.
 - Homepage: `docker compose build web && docker compose up -d web`
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
+- CMS Admin setup
+  - Copy `static/admin/config.dev.yml` to `config.yml` for local development
+  - Copy `static/admin/config.prod.yml` to `config.yml` for production deployment
+  - Admin URLs: Local `http://localhost:17177/admin/`, Production `https://blog.trr.co.kr/admin/`
+
+## Build/Cache
+- Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).
+  - Blog (local): `cd traum_blog && docker compose build --no-cache blog && docker compose up -d blog`
+  - Web  (local): `docker compose build --no-cache web && docker compose up -d web`
+- When deploying styles/scripts, bump query-string versions in templates (e.g., `/css/blog.css?v=YYYYMMDD`).
+- After changing `traum_blog/.env`, recreate only the OAuth container to apply new secrets/scopes:
+  - `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`
 
 ## Ports
 - Homepage: 127.0.0.1:17176 → 8080
@@ -119,6 +131,12 @@ Granularity
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
 - Port conflicts: adjust `.env` ports; keep loopback binds.
+- GitHub OAuth login fails
+  - OAuth app: Homepage `https://blog.trr.co.kr`, Callback `https://blog.trr.co.kr/oauth/callback`
+  - Scope: `public_repo` for public repo, use `repo` for private repo
+  - Ensure `traum_blog/static/admin/config.yml` copied from the appropriate template
+  - Reproduce locally: `http://localhost:17177/admin/`
+  - Test: `OAUTH_TEST_MODE=1 npx playwright test`
 
 
 ## Commitlint

@@ -3,10 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
     <title>트라움자원 필드노트 Admin</title>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </head>
   <body>
     <!-- Decap CMS mounts automatically when config.yml is present -->
+    <script src="/admin/decap-cms.js?v=20251031-2"></script>
+    <script>
+      // OAuth 폴백: 팝업이 토큰을 localStorage에 남겼다면, 메인 창에서 CMS가 읽을 수 있도록
+      (function(){
+        var K = 'decap_oauth_fallback_token';
+        function replay(){
+          try {
+            var t = localStorage.getItem(K);
+            if (t) {
+              var msg = 'authorization:github:success:' + JSON.stringify({ token: t, access_token: t, provider: 'github' });
+              window.postMessage(msg, window.location.origin);
+              localStorage.removeItem(K);
+              console.log('[admin] replayed oauth token from localStorage');
+            }
+          } catch (e) { /* no-op */ }
+        }
+        // 초기 1회
+        replay();
+        // storage 이벤트로 다른 윈도우에서 저장되었을 때도 감지
+        try { window.addEventListener('storage', function(e){ if (e.key === K) replay(); }, false); } catch(_){}
+        // 혹시 몰라 1.5초/3초/6초/10초 뒤 추가 확인
+        [1500, 3000, 6000, 10000].forEach(function(ms){ setTimeout(replay, ms); });
+      })();
+    </script>
   </body>
 </html>

@@ -2,8 +2,9 @@ backend:
   name: github
   repo: ginishuh/traum_homepage
   branch: main
-  base_url: http://127.0.0.1:17178
-  auth_endpoint: auth
+  base_url: http://localhost:17177
+  auth_endpoint: oauth/auth
+  site_domain: localhost:17177
 
 publish_mode: editorial_workflow
 media_folder: "traum_blog/static/uploads"
@@ -23,4 +24,3 @@ collections:
       - { label: "Description", name: "description", widget: "text", required: false }
       - { label: "Tags", name: "tags", widget: "list", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
-

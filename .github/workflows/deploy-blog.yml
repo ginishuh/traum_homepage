@@ -50,11 +50,14 @@ jobs:
           hugo-version: 'latest'
           extended: true
 
-      - name: Build blog with Hugo
+      - name: Build blog with Hugo (production)
         working-directory: traum_blog
+        env:
+          HUGO_ENV: production
         run: |
           set -euo pipefail
-          hugo --minify
+          echo "HUGO_ENV=$HUGO_ENV"
+          hugo --minify --environment "$HUGO_ENV"
           echo "\nBuilt files:" && find public -maxdepth 2 -type f | sed -n '1,50p'
 
       - name: Start ssh-agent and add key

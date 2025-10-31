@@ -10,3 +10,6 @@ build/
 node_modules/
 .env
 traum_blog/.env
+tests/e2e/artifacts/
+tests/e2e/screens/
+tests/e2e/test-results/
