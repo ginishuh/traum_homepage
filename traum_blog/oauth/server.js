@@ -37,6 +37,11 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
       try { window.opener.postMessage(msg, origin); } catch(e) {}
       // 객체 프로토콜(일부 버전 호환)
       try { window.opener.postMessage({ type: 'authorization', provider: (data.provider||'github'), token: data.token }, origin); } catch(e) {}
+      // 로컬스토리지 직접 주입(최후 수단: 일부 CMS 버전 호환성 문제 우회)
+      try {
+        var user = { token: data.token, backendName: (data.provider||'github') };
+        window.opener.localStorage.setItem('netlify-cms-user', JSON.stringify(user));
+      } catch (e) {}
       console.log('[OAuth] success posted to', origin);
       if (${autoClose}) setTimeout(function(){ try{ window.close(); }catch(e){} }, 400);
     }
