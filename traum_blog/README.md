@@ -90,6 +90,9 @@ server {
 - 설정: `static/admin/config.yml`
   - 로컬: `cp static/admin/config.dev.yml static/admin/config.yml`
   - 운영: `cp static/admin/config.prod.yml static/admin/config.yml`
+- `.env` 주요 플래그
+  - `DEV_ALLOW_ALL_ORIGINS=0` (로컬에서만 임시로 1)
+  - `OAUTH_TEST_MODE=0` (테스트 토큰용으로만 1)
 - .env 변경 시 OAuth 컨테이너 재생성 필요:
 ```bash
 cd traum_blog && docker compose up -d --force-recreate --no-deps oauth

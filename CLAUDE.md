@@ -68,6 +68,10 @@ Scope: Entire repository.
   - Copy `static/admin/config.dev.yml` to `config.yml` for local development
   - Copy `static/admin/config.prod.yml` to `config.yml` for production deployment
   - Admin URLs: Local `http://localhost:17177/admin/`, Production `https://blog.trr.co.kr/admin/`
+- Environment flags
+  - `DEV_ALLOW_ALL_ORIGINS=0` (set `1` only for local debugging that requires wildcard)
+  - `OAUTH_TEST_MODE=0` (set `1` only when using the built-in test token flow)
+  - After editing `.env`, run `docker compose up -d --force-recreate --no-deps oauth`
 
 ## Build/Cache
 - Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).

@@ -71,7 +71,10 @@ server {
 - 설정 파일 복사
   - 로컬 개발: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
   - 운영 배포: `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
-- `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동 (`OAUTH_TEST_MODE=1`은 로컬 테스트에만 사용)
+- `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동
+  - 운영/실제 로그인: `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0`
+  - 로컬 테스트 토큰(팝업 없이 즉시 발급)이 필요할 때만 `OAUTH_TEST_MODE=1`로 전환하고 테스트 후 다시 0으로 되돌리세요.
+  - `.env` 수정 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너를 재시작해야 적용됩니다.
 - E2E 확인: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 
 ### 브랜드 에셋 경로(공용)

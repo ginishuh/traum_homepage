@@ -87,4 +87,5 @@ curl -I -L https://trr.co.kr  # www로 301 확인
   - 로컬: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
 - 로컬 확인: `http://localhost:17177/admin/`
 - 자동 테스트: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
-- VPS 반영 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너를 다시 올려 토큰 처리 코드를 갱신합니다.
+- `.env` 기본값은 `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0` (테스트 시에만 1로 전환)
+- `.env` 수정 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너 재기동
