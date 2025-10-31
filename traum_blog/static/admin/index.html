@@ -8,7 +8,7 @@
   </head>
   <body>
     <!-- Decap CMS mounts automatically when config.yml is present -->
-    <script src="/admin/decap-cms.js"></script>
+    <script src="/admin/decap-cms.js?v=20251031"></script>
     <script>
       // OAuth 폴백: 팝업이 토큰을 localStorage에 남겼다면, 메인 창에서 CMS가 읽을 수 있도록
       (function(){
@@ -28,8 +28,8 @@
         replay();
         // storage 이벤트로 다른 윈도우에서 저장되었을 때도 감지
         try { window.addEventListener('storage', function(e){ if (e.key === K) replay(); }, false); } catch(_){}
-        // 혹시 몰라 3초 뒤 한 번 더 확인
-        setTimeout(replay, 3000);
+        // 혹시 몰라 3초/6초/10초 뒤 추가 확인
+        [3000, 6000, 10000].forEach(function(ms){ setTimeout(replay, ms); });
       })();
     </script>
   </body>

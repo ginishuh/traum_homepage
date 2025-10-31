@@ -19,12 +19,15 @@ const OAUTH_AUTOCLOSE = process.env.OAUTH_AUTOCLOSE !== '0';
 function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
   const allowed = Array.isArray(allowedOrigins) ? allowedOrigins : [];
   const data = payload; // 객체 그대로 유지
-  const fallbackTargets = Array.from(new Set([...(allowed || []), '*']));
+  const fallbackTargets = Array.from(new Set([...(allowed || []), ...(devAllowAll ? ['*'] : [])]));
   const autoClose = OAUTH_AUTOCLOSE ? 'true' : 'false';
   return `<!doctype html><html><body><script>
   (function() {
     var data = ${JSON.stringify(data)};
     var fallbackTargets = ${JSON.stringify(fallbackTargets)};
+    // 부모 오리진 추정(가능하면 우선 전송)
+    var parentOrigin = '';
+    try { parentOrigin = new URL(document.referrer).origin; } catch (_e) {}
     function successTo(origin){
       if (!window.opener) return;
       var msg = 'authorization:' + (data.provider||'github') + ':success:' + JSON.stringify(data);
@@ -34,25 +37,31 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
     }
     function receiveAck(e){
       try { successTo(e.origin); } catch(err) {}
-      // 폴백: 0.3초 간격으로 5초 동안 재전송(리스너 타이밍 이슈 방지)
-      var count = 0; var iv = setInterval(function(){
-        try { fallbackTargets.forEach(function(t){ successTo(t); }); } catch(_){}
-        if (++count >= 10) clearInterval(iv);
-      }, 500);
       window.removeEventListener('message', receiveAck, false);
+    }
+    // 즉시 전송 + 버스트 반복(ACK 없어도 전달)
+    function burstOnce(){
+      if (parentOrigin) successTo(parentOrigin);
+      try { fallbackTargets.forEach(function(t){ successTo(t); }); } catch(_){}
     }
     function start(){
       if (!window.opener){ document.body.textContent = 'OAuth done. You may close this window.'; return; }
       window.addEventListener('message', receiveAck, false);
       try { window.opener.postMessage('authorizing:github', '*'); } catch(e) {}
       try { if (data && data.token) localStorage.setItem('decap_oauth_fallback_token', data.token); } catch(_){}
+      // ▶ 즉시 1회 + 0.4s 간격 약 5초 반복
+      burstOnce();
+      var count = 0; var iv = setInterval(function(){
+        burstOnce();
+        if (++count >= 12) clearInterval(iv);
+      }, 400);
     }
     if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', start); else start();
     // 수동 버튼
     document.body.innerHTML = '<p>GitHub 인증 완료. 자동으로 닫히지 않으면 Finish를 누르세요.</p>'+
       '<button id="finish">Finish Login</button>';
     document.getElementById('finish').addEventListener('click', function(){
-      successTo('*');
+      if (parentOrigin) successTo(parentOrigin);
       fallbackTargets.forEach(function(t){ successTo(t); });
     });
   })();
