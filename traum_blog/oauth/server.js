@@ -21,9 +21,8 @@ const TEST_MODE_ENABLED = process.env.OAUTH_TEST_MODE === '1';
 const FALLBACK_STORAGE_KEY = 'decap_oauth_fallback_token';
 
 function buildPostMessagePage(payload, options = {}) {
-  const extraTargets = Array.isArray(options.allowedOrigins) ? options.allowedOrigins : [];
-  const includeWildcard = options.includeWildcard ? ['*'] : [];
-  const targets = Array.from(new Set([...extraTargets, ...includeWildcard]));
+  const allowedList = Array.isArray(options.allowedOrigins) ? options.allowedOrigins : [];
+  const allowWildcard = options.includeWildcard === true;
 
   const script = `
     (function () {
@@ -33,8 +32,10 @@ function buildPostMessagePage(payload, options = {}) {
       var burstLimit = ${SUCCESS_BURST_ATTEMPTS};
       var autoClose = ${OAUTH_AUTOCLOSE ? 'true' : 'false'};
       var autoCloseDelay = ${AUTO_CLOSE_DELAY_MS};
+      var allowWildcard = ${allowWildcard ? 'true' : 'false'};
+      var allowedOrigins = ${JSON.stringify(allowedList)};
       var parentOrigin = determineParentOrigin();
-      var targets = buildTargets(parentOrigin, ${JSON.stringify(targets)});
+      var targets = buildTargets();
 
       if (!window.opener) {
         renderStandalone();
@@ -62,7 +63,7 @@ function buildPostMessagePage(payload, options = {}) {
         return '';
       }
 
-      function buildTargets(parentOrigin, extras) {
+      function buildTargets() {
         var seen = {};
         var list = [];
         function add(origin) {
@@ -70,13 +71,21 @@ function buildPostMessagePage(payload, options = {}) {
           seen[origin] = true;
           list.push(origin);
         }
-        add(parentOrigin);
-        (extras || []).forEach(add);
+        if (allowWildcard) {
+          if (parentOrigin) add(parentOrigin);
+          (allowedOrigins || []).forEach(add);
+          add('*');
+        } else {
+          if (isOriginAllowed(parentOrigin)) add(parentOrigin);
+          (allowedOrigins || []).forEach(add);
+        }
         return list;
       }
 
       function relayAll(targets, payload) {
         (targets || []).forEach(function (origin) {
+          if (origin === '*' && !allowWildcard) return;
+          if (origin !== '*' && !isOriginAllowed(origin)) return;
           postToOrigin(origin, payload);
         });
       }
@@ -99,8 +108,15 @@ function buildPostMessagePage(payload, options = {}) {
 
       function handleAck(event) {
         if (!event || !event.origin) return;
+        if (!isOriginAllowed(event.origin)) return;
         relayAll([event.origin], payload);
         window.removeEventListener('message', handleAck, false);
+      }
+
+      function isOriginAllowed(origin) {
+        if (!origin) return false;
+        if (allowWildcard) return true;
+        return allowedOrigins.indexOf(origin) !== -1;
       }
 
       function rememberToken(payload) {
