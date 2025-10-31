@@ -132,9 +132,9 @@ Granularity
 - Port conflicts: adjust `.env` ports; keep loopback binds.
 - GitHub OAuth login fails
   - OAuth app: Homepage `https://blog.trr.co.kr`, Callback `https://blog.trr.co.kr/oauth/callback`
-  - Scope: `public_repo` for 공개 레포, private 레포면 `repo`
-  - 로컬 재현: `http://localhost:17177/admin/?config=config.dev.yml`
-  - 테스트: `cd tests/e2e && npm install && npx playwright test`
+  - Scope: `public_repo` for public repo, use `repo` for private repo
+  - Reproduce locally: `http://localhost:17177/admin/?config=config.dev.yml`
+  - Test: `cd tests/e2e && npm install && npx playwright test`
 
 
 ## Commitlint
