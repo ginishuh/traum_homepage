@@ -25,12 +25,13 @@ HOMEPAGE_PORT=17176
 docker compose build web && docker compose up -d web
 
 # 블로그 (http://127.0.0.1:17177)
-cd traum_blog && docker compose build blog && docker compose up -d blog
-# (선택) CMS OAuth 프록시: .env 설정 후
-docker compose up -d oauth
+cd traum_blog
+cp static/admin/config.dev.yml static/admin/config.yml
+# (필요 시) .env에 OAUTH_TEST_MODE=1 설정 후
+docker compose build blog && docker compose up -d blog oauth
 
 # CMS Admin (Decap)
-# - 로컬: http://localhost:17177/admin/?config=config.dev.yml
+# - 로컬: http://localhost:17177/admin/
 # - 운영: https://blog.trr.co.kr/admin/
 ```
 
@@ -65,10 +66,13 @@ server {
 ## 블로그(Decap CMS)
 - 관리페이지
   - 운영: `https://blog.trr.co.kr/admin/`
-  - 로컬: `http://localhost:17177/admin/?config=config.dev.yml`
+  - 로컬: `http://localhost:17177/admin/`
 - GitHub OAuth App 등록(Homepage/Callback URL은 README의 블로그 섹션 참조)
-- `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동
-- E2E 확인: `cd tests/e2e && npm install && npx playwright test`
+- 설정 파일 복사
+  - 로컬 개발: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
+  - 운영 배포: `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
+- `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동 (`OAUTH_TEST_MODE=1`은 로컬 테스트에만 사용)
+- E2E 확인: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 
 ### 브랜드 에셋 경로(공용)
 - 저장 위치: `traum_blog/static/brand/`

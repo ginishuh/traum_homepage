@@ -1,4 +1,22 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+const adminDir = path.join(repoRoot, 'traum_blog', 'static', 'admin');
+const runtimeConfigPath = path.join(adminDir, 'config.yml');
+const devConfigPath = path.join(adminDir, 'config.dev.yml');
+const artifactDir = path.join(__dirname, 'artifacts');
+const screenshotPath = path.join(artifactDir, 'admin-after-login.png');
+
+test.beforeAll(() => {
+  if (!fs.existsSync(runtimeConfigPath)) {
+    fs.copyFileSync(devConfigPath, runtimeConfigPath);
+  }
+  if (!fs.existsSync(artifactDir)) {
+    fs.mkdirSync(artifactDir, { recursive: true });
+  }
+});
 
 test('admin receives OAuth token (test mode) and sends GitHub API with Authorization', async ({ page, context }) => {
   // Arrange: Intercept GitHub API and capture requests
@@ -42,7 +60,7 @@ test('admin receives OAuth token (test mode) and sends GitHub API with Authoriza
 
   // Ensure blog/oauth are up (best-effort; ignore failures)
   try {
-  await page.goto('http://localhost:17177/admin/?config=config.dev.yml', { waitUntil: 'load' });
+    await page.goto('http://localhost:17177/admin/', { waitUntil: 'load' });
   } catch (_) {}
 
   // Act: Open OAuth TEST popup so that window.opener is the admin page
@@ -76,7 +94,7 @@ test('admin receives OAuth token (test mode) and sends GitHub API with Authoriza
   await expect(page.locator('text=Login with GitHub')).toHaveCount(0, { timeout: 5000 });
 
   // Take a screenshot for visual confirmation
-  await page.screenshot({ path: 'tests/e2e/screens/admin-after-login.png', fullPage: true });
+  await page.screenshot({ path: screenshotPath, fullPage: true });
 
   // Assert: At least one API call was made with Authorization header containing our fake token
   await expect.poll(async () => captured.length, { timeout: 5000 }).toBeGreaterThan(0);

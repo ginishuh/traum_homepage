@@ -7,123 +7,189 @@ const PORT = process.env.PORT || 3000;
 const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const REDIRECT_URL = process.env.OAUTH_REDIRECT_URL; // e.g., https://blog.trr.co.kr/oauth/callback
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 const DEV_ALLOW_ALL_ORIGINS = process.env.DEV_ALLOW_ALL_ORIGINS === '1';
 const GITHUB_SCOPE = process.env.GITHUB_SCOPE || 'repo';
 const OAUTH_AUTOCLOSE = process.env.OAUTH_AUTOCLOSE !== '0';
+const AUTO_CLOSE_DELAY_MS = Number(process.env.OAUTH_AUTOCLOSE_DELAY_MS || 400);
+const SUCCESS_BURST_INTERVAL_MS = Number(process.env.OAUTH_SUCCESS_BURST_INTERVAL_MS || 400);
+const SUCCESS_BURST_ATTEMPTS = Number(process.env.OAUTH_SUCCESS_BURST_ATTEMPTS || 12);
+const TEST_MODE_ENABLED = process.env.OAUTH_TEST_MODE === '1';
+const FALLBACK_STORAGE_KEY = 'decap_oauth_fallback_token';
 
-// 권장 방식(+폴백):
-// 1) 팝업이 'authorizing:github' 을 보냄 → 부모가 응답
-// 2) 응답의 origin 으로 'authorization:github:success:{...}' 전송
-// 3) 폴백: 허용 오리진 및 '*' 로도 재전송(일부 테마/버전 호환)
-function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
-  const allowed = Array.isArray(allowedOrigins) ? allowedOrigins : [];
-  const data = payload; // 객체 그대로 유지
-  const fallbackTargets = Array.from(new Set([...(allowed || []), ...(devAllowAll ? ['*'] : [])]));
-  const autoClose = OAUTH_AUTOCLOSE ? 'true' : 'false';
-  return `<!doctype html><html><body><script>
-  (function() {
-    var data = ${JSON.stringify(data)};
-    var fallbackTargets = ${JSON.stringify(fallbackTargets)};
-    // 부모 오리진 추정(최우선: opener.location.origin, 폴백: document.referrer)
-    var parentOrigin = '';
-    try { if (window.opener && window.opener.location) parentOrigin = window.opener.location.origin; } catch (_e) {}
-    if (!parentOrigin) { try { parentOrigin = new URL(document.referrer).origin; } catch (_e2) {}
-    }
-    function successTo(origin){
-      if (!window.opener) return;
-      var target = origin;
-      if (target !== '*' && parentOrigin && target !== parentOrigin) {
-        target = parentOrigin;
+function buildPostMessagePage(payload, options = {}) {
+  const extraTargets = Array.isArray(options.allowedOrigins) ? options.allowedOrigins : [];
+  const includeWildcard = options.includeWildcard ? ['*'] : [];
+  const targets = Array.from(new Set([...extraTargets, ...includeWildcard]));
+
+  const script = `
+    (function () {
+      var payload = ${JSON.stringify(payload)};
+      var storageKey = '${FALLBACK_STORAGE_KEY}';
+      var burstInterval = ${SUCCESS_BURST_INTERVAL_MS};
+      var burstLimit = ${SUCCESS_BURST_ATTEMPTS};
+      var autoClose = ${OAUTH_AUTOCLOSE ? 'true' : 'false'};
+      var autoCloseDelay = ${AUTO_CLOSE_DELAY_MS};
+      var parentOrigin = determineParentOrigin();
+      var targets = buildTargets(parentOrigin, ${JSON.stringify(targets)});
+
+      if (!window.opener) {
+        renderStandalone();
+        return;
       }
-      var msg = 'authorization:' + (data.provider||'github') + ':success:' + JSON.stringify(data);
-      // 문자열 프로토콜(구버전 호환)
-      try { window.opener.postMessage(msg, target); } catch(e) {}
-      // 객체 프로토콜(일부 버전 호환)
-      try {
-        window.opener.postMessage({ type: 'authorization', provider: (data.provider||'github'), token: data.token, access_token: data.access_token || data.token, state: data.state }, target);
-      } catch(e) {}
-      // 세션 nonce 유지(일부 브라우저에서 popup 종료 시 사라지는 경우 대비)
-      try {
-        if (data.state) {
-          window.opener.sessionStorage.setItem('decap-cms-auth', JSON.stringify({ nonce: data.state }));
+
+      try { window.opener.postMessage('authorizing:github', '*'); } catch (_) {}
+      rememberToken(payload);
+      rememberNonce(payload);
+      updateImplicitHash(payload);
+      cachePopupToken(payload, storageKey);
+      relayAll(targets, payload);
+      scheduleBursts(targets, payload, burstInterval, burstLimit);
+      window.addEventListener('message', handleAck, false);
+      renderManualFinish(targets, payload);
+      if (autoClose) {
+        setTimeout(function () {
+          try { window.close(); } catch (_) {}
+        }, autoCloseDelay);
+      }
+
+      function determineParentOrigin() {
+        try { return window.opener.location.origin; } catch (_) {}
+        try { return new URL(document.referrer).origin; } catch (_) {}
+        return '';
+      }
+
+      function buildTargets(parentOrigin, extras) {
+        var seen = {};
+        var list = [];
+        function add(origin) {
+          if (!origin || seen[origin]) return;
+          seen[origin] = true;
+          list.push(origin);
         }
-      } catch(_){ }
-      // 로컬스토리지 직접 주입(최후 수단: 일부 CMS 버전 호환성 문제 우회)
-      try {
-        var user = { token: data.token, backendName: (data.provider||'github') };
-        var serialized = JSON.stringify(user);
-        window.opener.localStorage.setItem('decap-cms-user', serialized);
-        window.opener.localStorage.setItem('netlify-cms-user', serialized);
-      } catch (e) {}
-      // 해시 기반 암시적 플로우를 사용하는 테마 호환: access_token을 URL 해시에 주입 후 알림
-      try {
-        if (data && data.token && window.opener && window.opener.location) {
-          var openerLoc = window.opener.location;
-          var baseHref = openerLoc.href.split('#')[0];
-          var hashParts = ['access_token=' + encodeURIComponent(data.token)];
-          if (data.state) hashParts.push('state=' + encodeURIComponent(data.state));
-          hashParts.push('token_type=bearer');
-          hashParts.push('provider=' + encodeURIComponent(data.provider || 'github'));
-          hashParts.push('expires_in=3600');
-          hashParts.push('scope=' + encodeURIComponent('repo public_repo read:user'));
+        add(parentOrigin);
+        (extras || []).forEach(add);
+        return list;
+      }
+
+      function relayAll(targets, payload) {
+        (targets || []).forEach(function (origin) {
+          postToOrigin(origin, payload);
+        });
+      }
+
+      function postToOrigin(origin, payload) {
+        try {
+          var successMessage = 'authorization:' + (payload.provider || 'github') + ':success:' + JSON.stringify(payload);
+          window.opener.postMessage(successMessage, origin);
+        } catch (_) {}
+        try {
+          window.opener.postMessage({
+            type: 'authorization',
+            provider: payload.provider || 'github',
+            token: payload.token,
+            access_token: payload.access_token || payload.token,
+            state: payload.state
+          }, origin);
+        } catch (_) {}
+      }
+
+      function handleAck(event) {
+        if (!event || !event.origin) return;
+        relayAll([event.origin], payload);
+        window.removeEventListener('message', handleAck, false);
+      }
+
+      function rememberToken(payload) {
+        if (!payload || !payload.token) return;
+        try {
+          var serialized = JSON.stringify({ token: payload.token, backendName: payload.provider || 'github' });
+          window.opener.localStorage.setItem('decap-cms-user', serialized);
+          window.opener.localStorage.setItem('netlify-cms-user', serialized);
+        } catch (_) {}
+      }
+
+      function rememberNonce(payload) {
+        if (!payload || !payload.state) return;
+        try {
+          window.opener.sessionStorage.setItem('decap-cms-auth', JSON.stringify({ nonce: payload.state }));
+        } catch (_) {}
+      }
+
+      function updateImplicitHash(payload) {
+        if (!payload || !payload.token) return;
+        try {
+          var openerLocation = window.opener.location;
+          if (!openerLocation) return;
+          var baseHref = openerLocation.href.split('#')[0];
+          var hashParts = [
+            'access_token=' + encodeURIComponent(payload.token),
+            'token_type=bearer',
+            'provider=' + encodeURIComponent(payload.provider || 'github'),
+            'expires_in=3600',
+            'scope=' + encodeURIComponent('repo public_repo read:user')
+          ];
+          if (payload.state) hashParts.push('state=' + encodeURIComponent(payload.state));
           var hash = '#' + hashParts.join('&');
-          try { openerLoc.hash = hash; } catch(_) { openerLoc.href = baseHref + hash; }
-          try { window.opener.dispatchEvent(new HashChangeEvent('hashchange')); } catch(_ignore) {}
-        }
-      } catch (_hashErr) {}
-      console.log('[OAuth] success posted to', origin);
-      if (${autoClose}) setTimeout(function(){ try{ window.close(); }catch(e){} }, 400);
-    }
-    function receiveAck(e){
-      try { successTo(e.origin); } catch(err) {}
-      window.removeEventListener('message', receiveAck, false);
-    }
-    // 즉시 전송 + 버스트 반복(ACK 없어도 전달)
-    function burstOnce(){
-      if (parentOrigin) successTo(parentOrigin);
-      try { fallbackTargets.forEach(function(t){ successTo(t); }); } catch(_){}
-    }
-    function start(){
-      if (!window.opener){ document.body.textContent = 'OAuth done. You may close this window.'; return; }
-      window.addEventListener('message', receiveAck, false);
-      try { window.opener.postMessage('authorizing:github', '*'); } catch(e) {}
-      try { if (data && data.token) localStorage.setItem('decap_oauth_fallback_token', data.token); } catch(_){}
-      // ▶ 즉시 1회 + 0.4s 간격 약 5초 반복
-      burstOnce();
-      var count = 0; var iv = setInterval(function(){
-        burstOnce();
-        if (++count >= 12) clearInterval(iv);
-      }, 400);
-    }
-    if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', start); else start();
-    // 수동 버튼
-    document.body.innerHTML = '<p>GitHub 인증 완료. 자동으로 닫히지 않으면 Finish를 누르세요.</p>'+
-      '<button id="finish">Finish Login</button>';
-    document.getElementById('finish').addEventListener('click', function(){
-      if (parentOrigin) successTo(parentOrigin);
-      fallbackTargets.forEach(function(t){ successTo(t); });
-    });
-  })();
-  </script></body></html>`;
+          try { openerLocation.hash = hash; } catch (_) { openerLocation.href = baseHref + hash; }
+          try { window.opener.dispatchEvent(new HashChangeEvent('hashchange')); } catch (_) {}
+        } catch (_) {}
+      }
+
+      function cachePopupToken(payload, storageKey) {
+        if (!payload || !payload.token) return;
+        try { localStorage.setItem(storageKey, payload.token); } catch (_) {}
+      }
+
+      function scheduleBursts(targets, payload, interval, limit) {
+        if (!interval || interval <= 0 || !limit) return;
+        var attempts = 0;
+        var timer = setInterval(function () {
+          attempts += 1;
+          relayAll(targets, payload);
+          if (attempts >= limit) clearInterval(timer);
+        }, interval);
+      }
+
+      function renderManualFinish(targets, payload) {
+        document.body.innerHTML = '<p>GitHub authentication complete. Close this window or click Finish.</p>';
+        var button = document.createElement('button');
+        button.id = 'finish-login';
+        button.textContent = 'Finish Login';
+        button.addEventListener('click', function () { relayAll(targets, payload); });
+        document.body.appendChild(button);
+      }
+
+      function renderStandalone() {
+        document.body.textContent = 'OAuth done. You may close this window.';
+      }
+    })();
+  `;
+
+  return `<!doctype html><html><body><script>${script}</script></body></html>`;
 }
 
 app.get('/auth', (req, res) => {
   const state = req.query.state || '';
-  // 테스트 모드: 실제 GitHub로 리디렉션하지 않고 즉시 성공 postMessage를 전송
-  if (req.query.test === '1' || process.env.OAUTH_TEST_MODE === '1') {
-    console.log('OAuth TEST mode: issuing fake token');
+
+  if (req.query.test === '1') {
+    if (!TEST_MODE_ENABLED) {
+      return res.status(403).send('OAuth test mode is disabled');
+    }
     const payload = { token: 'gho_test_token', access_token: 'gho_test_token', provider: 'github', state };
     res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none';");
-    return res.send(htmlPostMessage(ALLOWED_ORIGINS, DEV_ALLOW_ALL_ORIGINS, payload));
+    return res.send(buildPostMessagePage(payload, { allowedOrigins: ALLOWED_ORIGINS, includeWildcard: DEV_ALLOW_ALL_ORIGINS }));
   }
+
   console.log('OAuth auth request:', { state });
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', CLIENT_ID);
   url.searchParams.set('redirect_uri', REDIRECT_URL);
   url.searchParams.set('scope', GITHUB_SCOPE);
   if (state) url.searchParams.set('state', state);
-  console.log('Redirecting to GitHub:', url.toString());
   res.redirect(url.toString());
 });
 
@@ -132,6 +198,7 @@ app.get('/callback', async (req, res) => {
   const state = req.query.state || '';
   console.log('OAuth callback received:', { code: code ? 'present' : 'missing', state });
   if (!code) return res.status(400).send('Missing code');
+
   try {
     const tokenResp = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -144,28 +211,28 @@ app.get('/callback', async (req, res) => {
         state
       })
     });
+
     const tokenText = await tokenResp.text();
     console.log('GitHub token response status:', tokenResp.status);
-    console.log('GitHub token response text:', tokenText.substring(0, 500));
 
     let tokenJson;
     try {
       tokenJson = JSON.parse(tokenText);
     } catch (parseError) {
       console.error('Failed to parse GitHub response as JSON');
-      throw new Error('GitHub returned non-JSON response: ' + tokenText.substring(0, 200));
+      throw new Error('GitHub returned an unexpected response');
     }
-    console.log('GitHub token response parsed:', tokenJson);
+
     if (!tokenJson.access_token) {
-      console.error('OAuth failed: no access_token in response');
+      console.error('OAuth failed: access_token missing in response');
       return res.status(401).send('OAuth failed');
     }
+
     const payload = { token: tokenJson.access_token, access_token: tokenJson.access_token, provider: 'github', state };
-    // 최소한의 CSP만 부여. 인라인 스크립트/스타일 허용(디버그 텍스트용), 외부 연결 차단.
     res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none';");
-    res.send(htmlPostMessage(ALLOWED_ORIGINS, DEV_ALLOW_ALL_ORIGINS, payload));
+    res.send(buildPostMessagePage(payload, { allowedOrigins: ALLOWED_ORIGINS, includeWildcard: DEV_ALLOW_ALL_ORIGINS }));
   } catch (e) {
-    console.error('OAuth error:', e.message, e.stack);
+    console.error('OAuth error:', e.message);
     res.status(500).send('OAuth error: ' + e.message);
   }
 });

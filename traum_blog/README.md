@@ -11,12 +11,14 @@
 ## 빠른 시작(로컬)
 ```bash
 cd traum_blog
+# CMS config (local)
+cp static/admin/config.dev.yml static/admin/config.yml
 # 정적 빌드 이미지(운영과 동일 경로)
 docker compose build blog && docker compose up -d blog
 # (선택) OAuth 서버
 docker compose up -d oauth
-# Admin UI (Decap): http://localhost:17177/admin/?config=config.dev.yml
-#  - 운영 배포(https://blog.trr.co.kr/admin/)는 기본 config.yml을 사용합니다.
+# Admin UI (Decap): http://localhost:17177/admin/
+#  - 운영 배포 전에는 static/admin/config.prod.yml을 config.yml로 복사하세요.
 ```
 
 ### 캐시 없이 빌드(중요)
@@ -86,6 +88,8 @@ server {
 - 접근: https://blog.trr.co.kr/admin/
 - GitHub 로그인 → repo에 글(.md) 커밋/PR(편집 워크플로) 발생
 - 설정: `static/admin/config.yml`
+  - 로컬: `cp static/admin/config.dev.yml static/admin/config.yml`
+  - 운영: `cp static/admin/config.prod.yml static/admin/config.yml`
 - .env 변경 시 OAuth 컨테이너 재생성 필요:
 ```bash
 cd traum_blog && docker compose up -d --force-recreate --no-deps oauth

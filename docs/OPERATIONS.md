@@ -82,6 +82,9 @@ curl -I -L https://trr.co.kr  # www로 301 확인
   - Homepage URL: `https://blog.trr.co.kr`
   - Authorization callback URL: `https://blog.trr.co.kr/oauth/callback`
   - Private 레포면 `GITHUB_SCOPE=repo`, 공개 레포면 `public_repo`
-- 로컬 확인: `http://localhost:17177/admin/?config=config.dev.yml`
-- 자동 테스트: `cd tests/e2e && npm install && npx playwright test`
+- 설정 파일 복사
+  - 운영: `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
+  - 로컬: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
+- 로컬 확인: `http://localhost:17177/admin/`
+- 자동 테스트: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 - VPS 반영 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너를 다시 올려 토큰 처리 코드를 갱신합니다.
