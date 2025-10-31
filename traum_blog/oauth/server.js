@@ -31,7 +31,10 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
     function successTo(origin){
       if (!window.opener) return;
       var msg = 'authorization:' + (data.provider||'github') + ':success:' + JSON.stringify(data);
+      // 문자열 프로토콜(구버전 호환)
       try { window.opener.postMessage(msg, origin); } catch(e) {}
+      // 객체 프로토콜(일부 버전 호환)
+      try { window.opener.postMessage({ type: 'authorization', provider: (data.provider||'github'), token: data.token }, origin); } catch(e) {}
       console.log('[OAuth] success posted to', origin);
       if (${autoClose}) setTimeout(function(){ try{ window.close(); }catch(e){} }, 400);
     }
