@@ -64,6 +64,9 @@ Scope: Entire repository.
 - Homepage: `docker compose build web && docker compose up -d web`
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
+- CMS Admin URLs
+  - Local: `http://localhost:17177/admin/?config=config.dev.yml`
+  - Production: `https://blog.trr.co.kr/admin/`
 
 ## Build/Cache
 - Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).
@@ -134,6 +137,11 @@ Granularity
 ## Troubleshooting
 - File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
 - Port conflicts: adjust `.env` ports; keep loopback binds.
+- GitHub OAuth login fails
+  - OAuth app: Homepage `https://blog.trr.co.kr`, Callback `https://blog.trr.co.kr/oauth/callback`
+  - Scope: `public_repo` for 공개 레포, private 레포면 `repo`
+  - 로컬 재현: `http://localhost:17177/admin/?config=config.dev.yml`
+  - 테스트: `cd tests/e2e && npm install && npx playwright test`
 
 
 ## Commitlint
