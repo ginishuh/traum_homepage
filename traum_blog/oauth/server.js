@@ -25,9 +25,11 @@ function htmlPostMessage(allowedOrigins, devAllowAll, payload) {
   (function() {
     var data = ${JSON.stringify(data)};
     var fallbackTargets = ${JSON.stringify(fallbackTargets)};
-    // 부모 오리진 추정(가능하면 우선 전송)
+    // 부모 오리진 추정(최우선: opener.location.origin, 폴백: document.referrer)
     var parentOrigin = '';
-    try { parentOrigin = new URL(document.referrer).origin; } catch (_e) {}
+    try { if (window.opener && window.opener.location) parentOrigin = window.opener.location.origin; } catch (_e) {}
+    if (!parentOrigin) { try { parentOrigin = new URL(document.referrer).origin; } catch (_e2) {}
+    }
     function successTo(origin){
       if (!window.opener) return;
       var msg = 'authorization:' + (data.provider||'github') + ':success:' + JSON.stringify(data);
