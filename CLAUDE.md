@@ -9,7 +9,7 @@ Scope: Entire repository.
 ## Language
 - Interactive responses from agents/helpers: Korean (all conversations must be in Korean).
 - Documentation (README, OPERATIONS, guides, PR template): Korean by default.
-- This file (AGENTS.md) is intentionally written in English; other docs remain Korean.
+- This file (CLAUDE.md) is intentionally written in English; other docs remain Korean.
 - Code comments: Korean by default; keep standard identifiers/terms in original English when needed.
 - Borrowed proper nouns/terms from external docs may remain in English (e.g., Conventional Commits type/scope).
 
@@ -24,10 +24,11 @@ Scope: Entire repository.
   - `HTTP_BIND_HOST` (default `127.0.0.1`)
   - `HOMEPAGE_PORT` (default `17176`)
 - Blog OAuth `traum_blog/.env`:
-  - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-  - `OAUTH_REDIRECT_URL` (e.g., `https://blog.trr.co.kr/oauth/callback`)
-  - `ALLOWED_ORIGINS` (e.g., `https://blog.trr.co.kr`)
-  - `GITHUB_SCOPE` = `public_repo` (public repo) or `repo` (private repo)
+  - Required: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+  - URLs/Origins: `OAUTH_REDIRECT_URL` (e.g., `https://blog.trr.co.kr/oauth/callback`), `ALLOWED_ORIGINS` (e.g., `https://blog.trr.co.kr`)
+  - Scope: `GITHUB_SCOPE` = `public_repo` or `repo`
+  - Behavior flags: `OAUTH_TEST_MODE`, `DEV_ALLOW_ALL_ORIGINS`, `OAUTH_AUTOCLOSE`, `OAUTH_AUTOCLOSE_DELAY_MS`, `OAUTH_SUCCESS_BURST_INTERVAL_MS`, `OAUTH_SUCCESS_BURST_ATTEMPTS`
+  - Metrics (optional): `METRICS_ENABLED`, `METRICS_BASIC_AUTH_USER`, `METRICS_BASIC_AUTH_PASS`
   - Optional: `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`
 
 ## CI / CD (GitHub Actions)
@@ -36,8 +37,8 @@ Scope: Entire repository.
   - Action: Hugo build → rsync to `/srv/traum_homepage/traum_blog/public/` (no container restart).
   - Secrets required: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT`(optional), `DEPLOY_SSH_KEY`.
 - Web CD: `.github/workflows/deploy-web.yml`
-  - Trigger: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml` changes.
-  - Action: SSH → `git reset --hard origin/main` → `docker compose build web && up -d web`.
+  - Trigger: `src/**` changes.
+  - Action: rsync `src/` → `/srv/traum_homepage/web/` (no container in production); optionally reload host nginx.
 - Optional Slack: `SLACK_WEBHOOK_URL` (if present, sends status notifications).
 
 ## Runtime users (non-root)
@@ -47,8 +48,9 @@ Scope: Entire repository.
 ## Nginx / TLS (host)
 - Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
   - `trr.co.kr` → 301 to `https://www.trr.co.kr`.
-  - `www.trr.co.kr` → `127.0.0.1:17176` (homepage).
-  - `blog.trr.co.kr` → `127.0.0.1:17177`, `/oauth/` → `127.0.0.1:17178/`.
+  - `www.trr.co.kr` → root `/srv/traum_homepage/web/` (static homepage).
+  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`; `/oauth/` → `127.0.0.1:17178/`.
+- Recommendation: protect or block `/oauth/metrics` in production (e.g., `return 403` or Basic Auth).
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
 - Do not hand-edit lines marked “# managed by Certbot”.
 
@@ -77,7 +79,6 @@ Scope: Entire repository.
 - Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).
   - Blog (local): `cd traum_blog && docker compose build --no-cache blog && docker compose up -d blog`
   - Web  (local): `docker compose build --no-cache web && docker compose up -d web`
-- When deploying styles/scripts, bump query-string versions in templates (e.g., `/css/blog.css?v=YYYYMMDD`).
 - After changing `traum_blog/.env`, recreate only the OAuth container to apply new secrets/scopes:
   - `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`
 
@@ -89,8 +90,9 @@ Scope: Entire repository.
 ## Reverse proxy
 - Terminate TLS at the host Nginx/Caddy/Traefik.
 - Host routing:
-  - `www.trr.co.kr` → `http://127.0.0.1:17176`
-  - `blog.trr.co.kr` → `http://127.0.0.1:17177`, `/oauth/` → `http://127.0.0.1:17178/`
+  - `www.trr.co.kr` → `/srv/traum_homepage/web/` (static root)
+  - `blog.trr.co.kr` → `/srv/traum_homepage/traum_blog/public/` (static root)
+  - `/oauth/` → `http://127.0.0.1:17178/` (Decap CMS OAuth container)
 
 ## Content workflow
 - Homepage: edit under `src/` then rebuild.

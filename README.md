@@ -70,6 +70,26 @@ server {
   - `.env` 수정 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너를 재시작해야 적용됩니다.
 - E2E 확인: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 
+### OAuth 서버 (TypeScript)
+- 소스 경로: `traum_blog/oauth/src/` (TypeScript, ESM)
+- 로컬 실행 예시
+  ```bash
+  cd traum_blog/oauth
+  npm install
+  npm run build
+  node dist/server.js
+  # 또는 Compose로: cd traum_blog && docker compose up -d --build oauth
+  ```
+- 환경 변수(요약, 자세한 항목은 `traum_blog/.env.example` 참고)
+  - 필수: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+  - URL/오리진: `OAUTH_REDIRECT_URL`, `ALLOWED_ORIGINS`
+  - 스코프: `GITHUB_SCOPE` = `public_repo`(공개) 또는 `repo`(비공개)
+  - 동작: `OAUTH_TEST_MODE`, `DEV_ALLOW_ALL_ORIGINS`, `OAUTH_AUTOCLOSE`, `OAUTH_AUTOCLOSE_DELAY_MS`, `OAUTH_SUCCESS_BURST_*`
+  - 메트릭(옵션): `METRICS_ENABLED`, `METRICS_BASIC_AUTH_USER`, `METRICS_BASIC_AUTH_PASS`
+- 보안
+  - 팝업 응답은 CSP nonce 기반 스크립트를 사용(unsafe-inline 제거)
+  - 운영에서 `/oauth/metrics`는 차단 또는 Basic Auth 보호 권장(Nginx 예시 하단 참고)
+
 ### 브랜드 에셋 경로(공용)
 - 저장 위치: `traum_blog/static/brand/`
 - 프로덕션 참조 URL: `https://blog.trr.co.kr/brand/<파일명>.svg`
@@ -129,6 +149,19 @@ server {
 - 롤백 계획(요약)
   - vhost를 이전 프록시 구성으로 되돌림: `www/blog`를 `127.0.0.1:17176/17177`로 프록시
   - 필요 시 `docker compose build web && docker compose up -d web`
+
+### Nginx: /oauth/metrics 보호(권장)
+```nginx
+# 완전 차단
+location = /oauth/metrics { return 403; }
+
+# 또는 Basic Auth 적용 (예시)
+# location = /oauth/metrics {
+#   auth_basic "Restricted";
+#   auth_basic_user_file /etc/nginx/.htpasswd_metrics;
+#   proxy_pass http://127.0.0.1:17178/metrics;
+# }
+```
 
 ## 로컬 개발 팁
 - 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).
