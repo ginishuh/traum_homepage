@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCspHeader, buildPostMessageHtml } from '../src/page'
+import { buildCspHeader, buildPostMessageHtml, randomNonce } from '../src/page'
 
 describe('CSP header', () => {
   it('includes nonce and no unsafe-inline', () => {
@@ -27,5 +27,9 @@ describe('postMessage page', () => {
     expect(html).toContain('script nonce="nonce123"')
     expect(html).toContain('Finish Login')
   })
-})
 
+  it('randomNonce returns base64url without +/=', () => {
+    const n = randomNonce(16)
+    expect(n).toMatch(/^[A-Za-z0-9_-]+$/)
+  })
+})

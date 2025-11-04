@@ -75,6 +75,12 @@ app.get('/auth', (req, res) => {
   res.redirect(url.toString());
 });
 
+interface GitHubTokenResponse {
+  access_token?: string;
+  error?: string;
+  error_description?: string;
+}
+
 app.get('/callback', async (req, res) => {
   mRequests.inc();
   const code = String(req.query.code || '');
@@ -88,8 +94,11 @@ app.get('/callback', async (req, res) => {
       body: JSON.stringify({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, code, redirect_uri: REDIRECT_URL, state }),
     });
     const tokenText = await tokenResp.text();
-    let tokenJson: any;
-    try { tokenJson = JSON.parse(tokenText); } catch { throw new Error('GitHub returned an unexpected response'); }
+    let tokenJson: GitHubTokenResponse;
+    try { tokenJson = JSON.parse(tokenText) as GitHubTokenResponse; }
+    catch {
+      throw new Error('GitHub returned an unexpected response');
+    }
     if (!tokenJson.access_token) return res.status(401).send('OAuth failed');
 
     const payload: PostMessagePayload = { token: tokenJson.access_token, access_token: tokenJson.access_token, provider: 'github', state };
@@ -107,9 +116,10 @@ app.get('/callback', async (req, res) => {
     });
     mSuccess.inc();
     res.send(html);
-  } catch (e: any) {
+  } catch (e: unknown) {
     mErrors.inc();
-    res.status(500).send('OAuth error: ' + (e?.message || 'unknown'));
+    const msg = (e && typeof e === 'object' && 'toString' in e) ? String(e) : (e as any)?.message || 'unknown';
+    res.status(500).send('OAuth error: ' + msg);
   }
 });
 
@@ -126,4 +136,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-

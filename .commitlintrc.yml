@@ -11,15 +11,15 @@ rules:
     - 2
     - always
     - 200
-  # Relax line-length constraints to avoid noisy failures on descriptive footers
+  # Relax line-length constraints but keep a reasonable soft cap
   footer-max-line-length:
-    - 0
+    - 1  # warn
     - always
-    - Infinity
+    - 500
   body-max-line-length:
-    - 0
+    - 1  # warn
     - always
-    - Infinity
+    - 500
   type-enum:
     - 2
     - always

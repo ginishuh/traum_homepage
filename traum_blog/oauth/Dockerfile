@@ -13,9 +13,10 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
+# Install only production deps to minimize image size
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
-COPY package.json ./
 USER node
 ENV PORT=3000
 EXPOSE 3000

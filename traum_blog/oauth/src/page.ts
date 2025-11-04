@@ -43,7 +43,8 @@ export function buildPostMessageHtml(
         return;
       }
 
-      try { window.opener.postMessage('authorizing:' + provider, '*'); } catch (_) {}
+      try { window.opener.postMessage('authorizing:' + provider, '*'); }
+      catch (err) { try { console && console.warn && console.warn('postMessage failed(authorizing):', err); } catch (_) {} }
       rememberToken(payload);
       rememberNonce(payload);
       updateImplicitHash(payload);
@@ -89,10 +90,10 @@ export function buildPostMessageHtml(
         try {
           var successMessage = 'authorization:' + provider + ':success:' + JSON.stringify(payload);
           window.opener.postMessage(successMessage, origin);
-        } catch (_) {}
+        } catch (err) { try { console && console.warn && console.warn('postMessage failed(success):', err); } catch (_) {} }
         try {
           window.opener.postMessage({ type: 'authorization', provider: provider, token: payload.token, access_token: payload.access_token || payload.token, state: payload.state }, origin);
-        } catch (_) {}
+        } catch (err) { try { console && console.warn && console.warn('postMessage failed(payload):', err); } catch (_) {} }
       }
 
       function handleAck(event) {
@@ -183,11 +184,9 @@ export function buildCspHeader(nonce: string): string {
   ].join('; ');
 }
 
-export function randomNonce(bytes = 16): string {
-  // Lightweight nonce; Node 20 crypto.randomBytes available, but avoid import for bundle simplicity
-  const table = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let out = '';
-  for (let i = 0; i < bytes * 2; i++) out += table[Math.floor(Math.random() * table.length)];
-  return out;
-}
+import { randomBytes } from 'crypto';
 
+export function randomNonce(bytes = 16): string {
+  // Use CSPRNG for CSP nonce and encode as base64url per spec.
+  return randomBytes(bytes).toString('base64url');
+}
