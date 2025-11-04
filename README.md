@@ -98,6 +98,24 @@ server {
   - 팝업 응답은 CSP nonce 기반 스크립트를 사용(unsafe-inline 제거)
   - 운영에서 `/oauth/metrics`는 차단 또는 Basic Auth 보호 권장(Nginx 예시 하단 참고)
 
+### Admin 오류 트러블슈팅
+- 증상: Admin 접속 시 "Failed to load config.yml (404)" 또는 콘솔에 "Response was not yaml" 출력
+- 원인: `static/admin/config.yml` 누락 또는 MIME이 YAML이 아님
+- 조치
+  1) 프로덕션: Actions가 자동 생성하지만, 필요 시 수동 생성
+     - `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
+     - Hugo 빌드 후 산출물(`public/admin/config.yml`)이 있는지 확인
+  2) Nginx에서 정확한 MIME 고정(운영 vhost에 추가)
+     ```nginx
+     # blog.trr.co.kr 서버 블록 내부
+     location = /admin/config.yml {
+         types { };
+         default_type text/yaml;
+         try_files $uri =404;
+     }
+     ```
+  3) 검증: `curl -I https://blog.trr.co.kr/admin/config.yml`가 `200` 이고 `Content-Type: text/yaml`
+
 ### 브랜드 에셋 경로(공용)
 - 저장 위치: `traum_blog/static/brand/`
 - 프로덕션 참조 URL: `https://blog.trr.co.kr/brand/<파일명>.svg`
@@ -152,6 +170,7 @@ server {
     - 보안상 필요한 커맨드만 허용
 - 검증(예)
   - `curl -sI https://www.trr.co.kr | sed -n '1,10p'`
+  - `curl -sI https://blog.trr.co.kr/admin/config.yml | rg -i '200|Content-Type: text/yaml'`
   - 정적 자산 응답 헤더에 `Cache-Control: public, max-age=2592000, immutable` 확인
   - 스타일/스크립트 변경 시는 쿼리스트링 버전(`?v=YYYYMMDD`)을 갱신
 - 롤백 계획(요약)

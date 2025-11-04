@@ -72,6 +72,7 @@ certbot renew --dry-run
 
 ## 검증 체크리스트(정적 전환)
 - `curl -I https://www.trr.co.kr` 200 OK 확인
+- `curl -I https://blog.trr.co.kr/admin/config.yml` → 200, `Content-Type: text/yaml` 확인
 - `curl -I https://www.trr.co.kr/styles.css` 등 정적 자산에 `Cache-Control: public, max-age=2592000, immutable` 확인
 - 블로그 `/admin` 로그인 플로우 정상(Decap CMS OAuth 프록시 127.0.0.1:17178 동작)
 - 외부 공개 포트 무노출(Compose 바인드는 루프백 고정)
@@ -102,6 +103,14 @@ curl -I -L https://trr.co.kr  # www로 301 확인
 - 설정 파일 복사
   - 로컬: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
   - 운영: Actions가 자동으로 `config.yml`을 생성합니다(없을 경우 `config.prod.yml`을 사용)
+  - Nginx에서 YAML MIME 고정(오류 예방)
+    ```nginx
+    location = /admin/config.yml {
+        types { };
+        default_type text/yaml;
+        try_files $uri =404;
+    }
+    ```
 - 로컬 확인: `http://localhost:17177/admin/`
 - 자동 테스트: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 - `.env` 기본값은 `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0` (테스트 시에만 1로 전환)

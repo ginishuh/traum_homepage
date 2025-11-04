@@ -59,6 +59,16 @@ Scope: Entire repository.
   # or require basic auth
   # location = /oauth/metrics { auth_basic "Restricted"; auth_basic_user_file /etc/nginx/.htpasswd_metrics; proxy_pass http://127.0.0.1:17178/metrics; }
   ```
+  - Admin config MIME: ensure `/admin/config.yml` serves with YAML
+  ```nginx
+  # inside blog.trr.co.kr server block
+  location = /admin/config.yml {
+    types { };
+    default_type text/yaml;
+    try_files $uri =404;
+  }
+  ```
+  - IPv6 policy: 기본적으로 `listen [::]:443` 비활성(경고 방지). IPv6 활성 시 모든 vhost의 `listen` 옵션 조합을 일치시키고 `nginx -t` 경고 0 유지.
 
 ## DNS
 - Keep existing nameservers (e.g., M365). Only add A records:

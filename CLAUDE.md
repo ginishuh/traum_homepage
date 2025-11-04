@@ -51,6 +51,16 @@ Scope: Entire repository.
   - `www.trr.co.kr` → root `/srv/www/trr/` (static homepage).
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`; `/oauth/` → `127.0.0.1:17178/`.
 - Recommendation: protect or block `/oauth/metrics` in production (e.g., `return 403` or Basic Auth).
+- Serve CMS config with YAML MIME
+  ```nginx
+  # inside blog.trr.co.kr server block
+  location = /admin/config.yml {
+    types { };
+    default_type text/yaml;
+    try_files $uri =404;
+  }
+  ```
+- IPv6 policy: disable `listen [::]:443` by default to avoid redefined warnings unless all vhosts share identical listen options.
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
 - Do not hand-edit lines marked “# managed by Certbot”.
 
@@ -103,7 +113,7 @@ Scope: Entire repository.
 - `traum_blog/static/admin/config.yml` is **environment-specific** and **git-ignored**.
 - Use `traum_blog/static/admin/config.yml.example` as template (production settings).
 - Local development: copy example to `config.yml` and adjust `base_url` to `http://localhost:17177/oauth`.
-- Production: copy example to `config.yml` and use `https://blog.trr.co.kr/oauth`.
+- Production: workflow auto-creates `static/admin/config.yml` from `config.prod.yml` if missing; use `https://blog.trr.co.kr/oauth`.
 - Do not commit `config.yml` to git.
 
 ## Style / Git
