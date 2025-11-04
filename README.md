@@ -21,6 +21,9 @@ HOMEPAGE_PORT=17176
 ```
 
 ## 로컬 실행
+권장: Admin(/admin)까지 포함한 E2E 개발은 `docker compose`로 블로그+OAuth를 실행하세요.
+웹은 단순 정적 미리보기면 비컨테이너도 가능하지만, Nginx 헤더/캐시 동작까지 검증하려면 `web` 서비스로 실행합니다.
+
 ```bash
 # 홈페이지 (http://127.0.0.1:17176)
 docker compose build web && docker compose up -d web
@@ -35,6 +38,11 @@ docker compose build blog && docker compose up -d blog oauth
 # - 로컬: http://localhost:17177/admin/
 # - 운영: https://blog.trr.co.kr/admin/
 ```
+
+### 로컬 개발 모드 요약
+- 기본 권장: `docker compose up -d blog oauth` (Admin/OAuth 포함 전체 플로우 검증)
+- 빠른 미리보기(웹만): `cd src && python3 -m http.server 17176 --bind 127.0.0.1` (또는 `npx serve`)
+- Nginx 동작까지 검증: `docker compose up -d web`
 
 ## VPS 배포(프로덕션)
 1) DNS

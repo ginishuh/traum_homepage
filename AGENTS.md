@@ -69,7 +69,8 @@ Scope: Entire repository.
 - See `docs/OPERATIONS.md` for common commands, checks, and procedures.
 
 ## Local commands
-- Homepage: `docker compose build web && docker compose up -d web`
+- 권장(로컬 E2E): Admin(/admin)까지 개발 시 `docker compose`로 블로그+OAuth를 실행합니다.
+- Homepage: `docker compose build web && docker compose up -d web` (정적 미리보기만 필요하면 비컨테이너 서버도 가능)
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
 - CMS Admin setup
