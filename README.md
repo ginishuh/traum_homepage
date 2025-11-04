@@ -52,7 +52,7 @@ docker compose build blog && docker compose up -d blog oauth
 ```
 server {
     listen 80; server_name www.trr.co.kr;
-    root /srv/traum_homepage/web;
+    root /srv/www/trr;
     index index.html;
 }
 server {
@@ -131,15 +131,15 @@ server {
 
 - 워크플로: `.github/workflows/deploy-web.yml`
 - 트리거: `src/**` 변경 또는 수동 실행
-- 동작: SSH/rsync로 `src/` → `/srv/traum_homepage/web/` 동기화 (필요 시 nginx reload)
+- 동작: SSH/rsync로 `src/` → `/srv/www/trr/` 동기화 (필요 시 nginx reload)
 
 ## 프로덕션 준비 체크리스트(웹 정적 배포)
 - Nginx vhost 설정 확인
-  - `www.trr.co.kr` → `root /srv/traum_homepage/web;` (정적 서빙)
+  - `www.trr.co.kr` → `root /srv/www/trr;` (정적 서빙)
   - `blog.trr.co.kr` → `root /srv/traum_homepage/traum_blog/public;`
   - `location /oauth/ { proxy_pass http://127.0.0.1:17178/; }`
 - 디렉터리 존재/권한
-  - `mkdir -p /srv/traum_homepage/web /srv/traum_homepage/traum_blog/public`
+  - `mkdir -p /srv/www/trr /srv/traum_homepage/traum_blog/public`
   - 웹 서버 사용자(예: `www-data`)가 읽을 수 있도록 퍼미션 확인
 - (선택) nginx reload 권한 위임
   - 워크플로는 `sudo -n systemctl reload nginx || sudo -n nginx -s reload || true`로 재시도를 시도합니다.

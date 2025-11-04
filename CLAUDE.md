@@ -38,7 +38,7 @@ Scope: Entire repository.
   - Secrets required: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT`(optional), `DEPLOY_SSH_KEY`.
 - Web CD: `.github/workflows/deploy-web.yml`
   - Trigger: `src/**` changes.
-  - Action: rsync `src/` → `/srv/traum_homepage/web/` (no container in production); optionally reload host nginx.
+  - Action: rsync `src/` → `/srv/www/trr/` (no container in production); optionally reload host nginx.
 - Optional Slack: `SLACK_WEBHOOK_URL` (if present, sends status notifications).
 
 ## Runtime users (non-root)
@@ -48,7 +48,7 @@ Scope: Entire repository.
 ## Nginx / TLS (host)
 - Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
   - `trr.co.kr` → 301 to `https://www.trr.co.kr`.
-  - `www.trr.co.kr` → root `/srv/traum_homepage/web/` (static homepage).
+  - `www.trr.co.kr` → root `/srv/www/trr/` (static homepage).
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`; `/oauth/` → `127.0.0.1:17178/`.
 - Recommendation: protect or block `/oauth/metrics` in production (e.g., `return 403` or Basic Auth).
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
@@ -91,7 +91,7 @@ Scope: Entire repository.
 ## Reverse proxy
 - Terminate TLS at the host Nginx/Caddy/Traefik.
 - Host routing:
-  - `www.trr.co.kr` → `/srv/traum_homepage/web/` (static root)
+  - `www.trr.co.kr` → `/srv/www/trr/` (static root)
   - `blog.trr.co.kr` → `/srv/traum_homepage/traum_blog/public/` (static root)
   - `/oauth/` → `http://127.0.0.1:17178/` (Decap CMS OAuth container)
 

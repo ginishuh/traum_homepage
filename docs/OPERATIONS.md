@@ -5,7 +5,7 @@
 ## 개요
 - 도메인: `trr.co.kr`, `www.trr.co.kr`, `blog.trr.co.kr`
 - 프로덕션 구성(정적 전환)
-  - 홈페이지: 호스트 Nginx가 `/srv/traum_homepage/web/` 정적 서빙(컨테이너 미사용)
+  - 홈페이지: 호스트 Nginx가 `/srv/www/trr/` 정적 서빙(컨테이너 미사용)
   - 블로그: Hugo 빌드 산출물 `/srv/traum_homepage/traum_blog/public/` 정적 서빙
   - OAuth: `traum-blog-oauth` (127.0.0.1:17178 → 3000, 컨테이너 유지)
 - 리버스 프록시: `/etc/nginx/sites-enabled/trr.conf`
@@ -37,12 +37,12 @@
  - 홈페이지 CD(정적 배포)
   - 워크플로: `.github/workflows/deploy-web.yml`
   - 트리거: `src/**`
-  - 동작: rsync `src/` → `/srv/traum_homepage/web/` (필요 시 nginx reload)
+- 동작: rsync `src/` → `/srv/www/trr/` (필요 시 nginx reload)
 
 ## 운영 명령(빈번)
 ```
 # 정적 동기화(수동)
-rsync -az --delete src/ user@host:/srv/traum_homepage/web/
+rsync -az --delete src/ user@host:/srv/www/trr/
 
 # 컨테이너 로그(OAuth)
 docker logs -f traum-blog-oauth
@@ -67,7 +67,7 @@ certbot renew --dry-run
 ## 프록시/TLS
 - 프록시 파일: `/etc/nginx/sites-enabled/trr.conf`
   - `trr.co.kr` → `https://www.trr.co.kr` 301
-  - `www.trr.co.kr` → root `/srv/traum_homepage/web/`
+- `www.trr.co.kr` → root `/srv/www/trr/`
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17178/
 
 ## 검증 체크리스트(정적 전환)
