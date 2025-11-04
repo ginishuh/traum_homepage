@@ -60,7 +60,7 @@ jobs:
       - name: Rsync src/ to VPS web root
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          DEST=/srv/traum_homepage/web/
+          DEST=/srv/www/trr/
           rsync -az --delete \
             --rsync-path="mkdir -p '$DEST' && rsync" \
             -e "ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=no" \
