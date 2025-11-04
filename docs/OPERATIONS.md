@@ -54,11 +54,32 @@ nginx -t && systemctl reload nginx
 certbot renew --dry-run
 ```
 
+### nginx reload 권한 설정(선택)
+- Actions 워크플로는 배포 후 `sudo -n systemctl reload nginx || sudo -n nginx -s reload || true`를 시도합니다.
+- 비대화식 재로드를 허용하려면 배포 계정에 제한된 `sudoers` 규칙을 추가하세요(호스트에서 실행).
+  ```
+  # /etc/sudoers.d/trr-nginx-reload
+  deploy ALL=(root) NOPASSWD:/bin/systemctl reload nginx,/usr/sbin/nginx -s reload
+  ```
+  - `deploy`는 실제 배포 사용자로 치환
+  - 필요 최소 명령만 허용하도록 유지
+
 ## 프록시/TLS
 - 프록시 파일: `/etc/nginx/sites-enabled/trr.conf`
   - `trr.co.kr` → `https://www.trr.co.kr` 301
   - `www.trr.co.kr` → root `/srv/traum_homepage/web/`
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17178/
+
+## 검증 체크리스트(정적 전환)
+- `curl -I https://www.trr.co.kr` 200 OK 확인
+- `curl -I https://www.trr.co.kr/styles.css` 등 정적 자산에 `Cache-Control: public, max-age=2592000, immutable` 확인
+- 블로그 `/admin` 로그인 플로우 정상(Decap CMS OAuth 프록시 127.0.0.1:17178 동작)
+- 외부 공개 포트 무노출(Compose 바인드는 루프백 고정)
+
+## 롤백 절차(요약)
+1) vhost를 이전 프록시 방식으로 되돌림
+   - `www` → `http://127.0.0.1:17176`, `blog` → `http://127.0.0.1:17177`, `/oauth/` → `http://127.0.0.1:17178/`
+2) 필요 시 컨테이너 복구: `docker compose build web && docker compose up -d web`
 - TLS 발급/갱신: `certbot --nginx -d trr.co.kr -d www.trr.co.kr -d blog.trr.co.kr`
 
 ## 보안 메모

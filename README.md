@@ -105,5 +105,30 @@ server {
 - 트리거: `src/**` 변경 또는 수동 실행
 - 동작: SSH/rsync로 `src/` → `/srv/traum_homepage/web/` 동기화 (필요 시 nginx reload)
 
+## 프로덕션 준비 체크리스트(웹 정적 배포)
+- Nginx vhost 설정 확인
+  - `www.trr.co.kr` → `root /srv/traum_homepage/web;` (정적 서빙)
+  - `blog.trr.co.kr` → `root /srv/traum_homepage/traum_blog/public;`
+  - `location /oauth/ { proxy_pass http://127.0.0.1:17178/; }`
+- 디렉터리 존재/권한
+  - `mkdir -p /srv/traum_homepage/web /srv/traum_homepage/traum_blog/public`
+  - 웹 서버 사용자(예: `www-data`)가 읽을 수 있도록 퍼미션 확인
+- (선택) nginx reload 권한 위임
+  - 워크플로는 `sudo -n systemctl reload nginx || sudo -n nginx -s reload || true`로 재시도를 시도합니다.
+  - 비밀번호 없이 재로드를 허용하려면 호스트에서 `sudoers` 항목을 제한적으로 추가하세요(사용자/경로는 환경에 맞게 조정).
+    ```
+    # /etc/sudoers.d/trr-nginx-reload
+    deploy ALL=(root) NOPASSWD:/bin/systemctl reload nginx,/usr/sbin/nginx -s reload
+    ```
+    - `deploy`를 배포 계정으로 치환
+    - 보안상 필요한 커맨드만 허용
+- 검증(예)
+  - `curl -sI https://www.trr.co.kr | sed -n '1,10p'`
+  - 정적 자산 응답 헤더에 `Cache-Control: public, max-age=2592000, immutable` 확인
+  - 스타일/스크립트 변경 시는 쿼리스트링 버전(`?v=YYYYMMDD`)을 갱신
+- 롤백 계획(요약)
+  - vhost를 이전 프록시 구성으로 되돌림: `www/blog`를 `127.0.0.1:17176/17177`로 프록시
+  - 필요 시 `docker compose build web && docker compose up -d web`
+
 ## 로컬 개발 팁
 - 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).
