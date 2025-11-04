@@ -1,13 +1,14 @@
 # TRR Website & Blog
 
-정적 홈페이지(`www.trr.co.kr`)와 블로그(`blog.trr.co.kr`)를 컨테이너로 운영하는 단일 레포입니다.
+정적 홈페이지(`www.trr.co.kr`)와 블로그(`blog.trr.co.kr`)를 최소한의 인프라로 운영하는 단일 레포입니다.
+프로덕션에서는 홈페이지/블로그를 호스트 Nginx가 정적으로 서빙하고, OAuth만 컨테이너로 유지합니다.
 
 ## 폴더 구조
 - 운영 가이드: `docs/OPERATIONS.md`
 - `src/` — 홈페이지 정적 파일(HTML/CSS/JS)
-- `Dockerfile` — 홈페이지 빌드/런(nginx unprivileged, 8080)
-- `nginx.conf` — 보안 헤더/캐시/압축 기본 설정
-- `docker-compose.yml` — `web` 서비스(이미지 빌드 후 실행)
+- `Dockerfile` — (로컬 개발용) nginx unprivileged, 8080
+- `nginx.conf` — (로컬 개발용) 보안 헤더/캐시/압축 기본 설정
+- `docker-compose.yml` — (로컬 개발용) `web` 서비스
 - `traum_blog/` — Hugo + Decap CMS 블로그(별도 compose/Dockerfile 포함)
   - `static/brand/` — 회사 로고 등 브랜드 에셋(홈/블로그 공용)
 
@@ -35,33 +36,25 @@ docker compose build blog && docker compose up -d blog oauth
 # - 운영: https://blog.trr.co.kr/admin/
 ```
 
-## VPS 배포
+## VPS 배포(프로덕션)
 1) DNS
    - `www.trr.co.kr` → VPS IP
    - `blog.trr.co.kr` → VPS IP
-2) 컨테이너
-```bash
-# 홈페이지
-cd ~/traum_homepage
-docker compose build web && docker compose up -d web
-
-# 블로그
-cd ~/traum_homepage/traum_blog
-docker compose build blog && docker compose up -d blog oauth
-```
-3) 리버스 프록시(Nginx 예시)
+2) 정적 루트(Nginx 예시)
 ```
 server {
     listen 80; server_name www.trr.co.kr;
-    location / { proxy_pass http://127.0.0.1:17176; proxy_set_header Host $host; }
+    root /srv/traum_homepage/web;
+    index index.html;
 }
 server {
     listen 80; server_name blog.trr.co.kr;
-    location /      { proxy_pass http://127.0.0.1:17177; proxy_set_header Host $host; }
-    location /oauth/ { proxy_pass http://127.0.0.1:17178/; proxy_set_header Host $host; }
+    root /srv/traum_homepage/traum_blog/public;
+    index index.html;
+    location /oauth/ { proxy_pass http://127.0.0.1:17178/; }
 }
 ```
-4) TLS는 certbot 또는 Caddy/Traefik 권장.
+3) TLS는 certbot 또는 Caddy/Traefik 권장.
 
 ## 블로그(Decap CMS)
 - 관리페이지
@@ -106,11 +99,11 @@ server {
 
 
 ## 자동배포(웹/CD)
-홈페이지(`web`)는 main 푸시 시 자동으로 빌드·재기동됩니다.
+홈페이지(`web`)는 main 푸시 시 정적 파일을 VPS로 동기화합니다(컨테이너 미사용).
 
 - 워크플로: `.github/workflows/deploy-web.yml`
-- 트리거: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml` 변경 또는 수동 실행
-- 동작: SSH로 VPS 접속 → `/srv/traum_homepage` 최신화 → `docker compose build web && up -d web`
+- 트리거: `src/**` 변경 또는 수동 실행
+- 동작: SSH/rsync로 `src/` → `/srv/traum_homepage/web/` 동기화 (필요 시 nginx reload)
 
 ## 로컬 개발 팁
 - 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).

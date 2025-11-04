@@ -4,10 +4,10 @@
 
 ## 개요
 - 도메인: `trr.co.kr`, `www.trr.co.kr`, `blog.trr.co.kr`
-- 컨테이너(프로덕션)
-  - 홈페이지: `traum-homepage` (127.0.0.1:17176 → Nginx 프록시)
-  - 블로그: `traum-blog` (127.0.0.1:17177)
-  - OAuth: `traum-blog-oauth` (127.0.0.1:17178)
+- 프로덕션 구성(정적 전환)
+  - 홈페이지: 호스트 Nginx가 `/srv/traum_homepage/web/` 정적 서빙(컨테이너 미사용)
+  - 블로그: Hugo 빌드 산출물 `/srv/traum_homepage/traum_blog/public/` 정적 서빙
+  - OAuth: `traum-blog-oauth` (127.0.0.1:17178 → 3000, 컨테이너 유지)
 - 리버스 프록시: `/etc/nginx/sites-enabled/trr.conf`
 - TLS: Let’s Encrypt(`certbot`) 자동 갱신
 
@@ -34,17 +34,17 @@
   - 트리거: `traum_blog/**` 푸시 또는 /admin 발행
   - 동작: GitHub Actions → Hugo 빌드 → `/srv/traum_homepage/traum_blog/public/` rsync
   - Secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT(옵션)`, `DEPLOY_SSH_KEY`
-- 홈페이지 CD(컨테이너 재빌드/재기동)
+ - 홈페이지 CD(정적 배포)
   - 워크플로: `.github/workflows/deploy-web.yml`
-  - 트리거: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml`
-  - 동작: SSH → `/srv/traum_homepage` 최신화 → `docker compose build web && up -d web`
+  - 트리거: `src/**`
+  - 동작: rsync `src/` → `/srv/traum_homepage/web/` (필요 시 nginx reload)
 
 ## 운영 명령(빈번)
 ```
-# 컨테이너 상태/로그
-docker ps
-docker logs -f traum-homepage
-docker logs -f traum-blog
+# 정적 동기화(수동)
+rsync -az --delete src/ user@host:/srv/traum_homepage/web/
+
+# 컨테이너 로그(OAuth)
 docker logs -f traum-blog-oauth
 
 # Nginx 적용/검사
@@ -52,17 +52,13 @@ nginx -t && systemctl reload nginx
 
 # 인증서 갱신 리허설
 certbot renew --dry-run
-
-# 수동 재배포: (대부분 필요 없음)
-cd /srv/traum_homepage/traum_blog && docker compose build blog && docker compose up -d blog
-cd /srv/traum_homepage && docker compose build web && docker compose up -d web
 ```
 
 ## 프록시/TLS
 - 프록시 파일: `/etc/nginx/sites-enabled/trr.conf`
   - `trr.co.kr` → `https://www.trr.co.kr` 301
-  - `www.trr.co.kr` → 127.0.0.1:17176
-  - `blog.trr.co.kr` → 127.0.0.1:17177, `/oauth/` → 127.0.0.1:17178/
+  - `www.trr.co.kr` → root `/srv/traum_homepage/web/`
+  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17178/
 - TLS 발급/갱신: `certbot --nginx -d trr.co.kr -d www.trr.co.kr -d blog.trr.co.kr`
 
 ## 보안 메모
