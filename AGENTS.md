@@ -24,10 +24,11 @@ Scope: Entire repository.
   - `HTTP_BIND_HOST` (default `127.0.0.1`)
   - `HOMEPAGE_PORT` (default `17176`)
 - Blog OAuth `traum_blog/.env`:
-  - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-  - `OAUTH_REDIRECT_URL` (e.g., `https://blog.trr.co.kr/oauth/callback`)
-  - `ALLOWED_ORIGINS` (e.g., `https://blog.trr.co.kr`)
-  - `GITHUB_SCOPE` = `public_repo` (public repo) or `repo` (private repo)
+  - Required: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+  - URLs/Origins: `OAUTH_REDIRECT_URL`(e.g., `https://blog.trr.co.kr/oauth/callback`), `ALLOWED_ORIGINS`(e.g., `https://blog.trr.co.kr`)
+  - Scope: `GITHUB_SCOPE` = `public_repo`(public repo) or `repo`(private repo)
+  - Behavior flags: `OAUTH_TEST_MODE`(0/1), `DEV_ALLOW_ALL_ORIGINS`(0/1), `OAUTH_AUTOCLOSE`(1), `OAUTH_AUTOCLOSE_DELAY_MS`(400), `OAUTH_SUCCESS_BURST_INTERVAL_MS`(400), `OAUTH_SUCCESS_BURST_ATTEMPTS`(12)
+  - Metrics (optional): `METRICS_ENABLED`(0/1), `METRICS_BASIC_AUTH_USER`, `METRICS_BASIC_AUTH_PASS`
   - Optional: `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`
 
 ## CI / CD (GitHub Actions)
@@ -51,6 +52,13 @@ Scope: Entire repository.
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → `127.0.0.1:17178/`.
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
 - Do not hand-edit lines marked “# managed by Certbot”.
+- Recommended: protect or block `/oauth/metrics` in production
+  ```nginx
+  # simple block
+  location = /oauth/metrics { return 403; }
+  # or require basic auth
+  # location = /oauth/metrics { auth_basic "Restricted"; auth_basic_user_file /etc/nginx/.htpasswd_metrics; proxy_pass http://127.0.0.1:17178/metrics; }
+  ```
 
 ## DNS
 - Keep existing nameservers (e.g., M365). Only add A records:
@@ -61,7 +69,8 @@ Scope: Entire repository.
 - See `docs/OPERATIONS.md` for common commands, checks, and procedures.
 
 ## Local commands
-- Homepage: `docker compose build web && docker compose up -d web`
+- 권장(로컬 E2E): Admin(/admin)까지 개발 시 `docker compose`로 블로그+OAuth를 실행합니다.
+- Homepage: `docker compose build web && docker compose up -d web` (정적 미리보기만 필요하면 비컨테이너 서버도 가능)
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
 - CMS Admin setup
