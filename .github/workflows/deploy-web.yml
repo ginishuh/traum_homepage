@@ -66,13 +66,7 @@ jobs:
             -e "ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=no" \
             src/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
 
-      - name: (Optional) Reload nginx on host
-        run: |
-          : "${DEPLOY_SSH_PORT:=22}"
-          ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash -se -c 'set -e; \
-              if command -v nginx >/dev/null 2>&1; then nginx -t >/dev/null 2>&1 || true; fi; \
-              (sudo -n systemctl reload nginx || sudo -n nginx -s reload || true)'
+      # Note: Reload not required for static file rsync; kept out to avoid noisy failures.
 
       - name: Verify HTTP (via host reverse proxy)
         run: |
