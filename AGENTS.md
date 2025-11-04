@@ -36,8 +36,8 @@ Scope: Entire repository.
   - Action: Hugo build → rsync to `/srv/traum_homepage/traum_blog/public/` (no container restart).
   - Secrets required: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT`(optional), `DEPLOY_SSH_KEY`.
 - Web CD: `.github/workflows/deploy-web.yml`
-  - Trigger: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml` changes.
-  - Action: SSH → `git reset --hard origin/main` → `docker compose build web && up -d web`.
+  - Trigger: `src/**` changes.
+  - Action: rsync `src/` → `/srv/traum_homepage/web/` (no container in production). Optionally reload host nginx.
 - Optional Slack: `SLACK_WEBHOOK_URL` (if present, sends status notifications).
 
 ## Runtime users (non-root)
@@ -47,8 +47,8 @@ Scope: Entire repository.
 ## Nginx / TLS (host)
 - Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
   - `trr.co.kr` → 301 to `https://www.trr.co.kr`.
-  - `www.trr.co.kr` → `127.0.0.1:17176` (homepage).
-  - `blog.trr.co.kr` → `127.0.0.1:17177`, `/oauth/` → `127.0.0.1:17178/`.
+  - `www.trr.co.kr` → root `/srv/traum_homepage/web/` (homepage served statically).
+  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → `127.0.0.1:17178/`.
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
 - Do not hand-edit lines marked “# managed by Certbot”.
 
@@ -89,8 +89,9 @@ Scope: Entire repository.
 ## Reverse proxy
 - Terminate TLS at the host Nginx/Caddy/Traefik.
 - Host routing:
-  - `www.trr.co.kr` → `http://127.0.0.1:17176`
-  - `blog.trr.co.kr` → `http://127.0.0.1:17177`, `/oauth/` → `http://127.0.0.1:17178/`
+  - `www.trr.co.kr` → `/srv/traum_homepage/web/` (static root)
+  - `blog.trr.co.kr` → `/srv/traum_homepage/traum_blog/public/` (static root)
+  - `/oauth/` → `http://127.0.0.1:17178/` (Decap CMS OAuth container)
 
 ## Content workflow
 - Homepage: edit under `src/` then rebuild.

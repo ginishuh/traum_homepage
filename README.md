@@ -1,13 +1,14 @@
 # TRR Website & Blog
 
-정적 홈페이지(`www.trr.co.kr`)와 블로그(`blog.trr.co.kr`)를 컨테이너로 운영하는 단일 레포입니다.
+정적 홈페이지(`www.trr.co.kr`)와 블로그(`blog.trr.co.kr`)를 최소한의 인프라로 운영하는 단일 레포입니다.
+프로덕션에서는 홈페이지/블로그를 호스트 Nginx가 정적으로 서빙하고, OAuth만 컨테이너로 유지합니다.
 
 ## 폴더 구조
 - 운영 가이드: `docs/OPERATIONS.md`
 - `src/` — 홈페이지 정적 파일(HTML/CSS/JS)
-- `Dockerfile` — 홈페이지 빌드/런(nginx unprivileged, 8080)
-- `nginx.conf` — 보안 헤더/캐시/압축 기본 설정
-- `docker-compose.yml` — `web` 서비스(이미지 빌드 후 실행)
+- `Dockerfile` — (로컬 개발용) nginx unprivileged, 8080
+- `nginx.conf` — (로컬 개발용) 보안 헤더/캐시/압축 기본 설정
+- `docker-compose.yml` — (로컬 개발용) `web` 서비스
 - `traum_blog/` — Hugo + Decap CMS 블로그(별도 compose/Dockerfile 포함)
   - `static/brand/` — 회사 로고 등 브랜드 에셋(홈/블로그 공용)
 
@@ -35,33 +36,25 @@ docker compose build blog && docker compose up -d blog oauth
 # - 운영: https://blog.trr.co.kr/admin/
 ```
 
-## VPS 배포
+## VPS 배포(프로덕션)
 1) DNS
    - `www.trr.co.kr` → VPS IP
    - `blog.trr.co.kr` → VPS IP
-2) 컨테이너
-```bash
-# 홈페이지
-cd ~/traum_homepage
-docker compose build web && docker compose up -d web
-
-# 블로그
-cd ~/traum_homepage/traum_blog
-docker compose build blog && docker compose up -d blog oauth
-```
-3) 리버스 프록시(Nginx 예시)
+2) 정적 루트(Nginx 예시)
 ```
 server {
     listen 80; server_name www.trr.co.kr;
-    location / { proxy_pass http://127.0.0.1:17176; proxy_set_header Host $host; }
+    root /srv/traum_homepage/web;
+    index index.html;
 }
 server {
     listen 80; server_name blog.trr.co.kr;
-    location /      { proxy_pass http://127.0.0.1:17177; proxy_set_header Host $host; }
-    location /oauth/ { proxy_pass http://127.0.0.1:17178/; proxy_set_header Host $host; }
+    root /srv/traum_homepage/traum_blog/public;
+    index index.html;
+    location /oauth/ { proxy_pass http://127.0.0.1:17178/; }
 }
 ```
-4) TLS는 certbot 또는 Caddy/Traefik 권장.
+3) TLS는 certbot 또는 Caddy/Traefik 권장.
 
 ## 블로그(Decap CMS)
 - 관리페이지
@@ -106,11 +99,36 @@ server {
 
 
 ## 자동배포(웹/CD)
-홈페이지(`web`)는 main 푸시 시 자동으로 빌드·재기동됩니다.
+홈페이지(`web`)는 main 푸시 시 정적 파일을 VPS로 동기화합니다(컨테이너 미사용).
 
 - 워크플로: `.github/workflows/deploy-web.yml`
-- 트리거: `src/**`, `Dockerfile`, `nginx.conf`, `docker-compose.yml` 변경 또는 수동 실행
-- 동작: SSH로 VPS 접속 → `/srv/traum_homepage` 최신화 → `docker compose build web && up -d web`
+- 트리거: `src/**` 변경 또는 수동 실행
+- 동작: SSH/rsync로 `src/` → `/srv/traum_homepage/web/` 동기화 (필요 시 nginx reload)
+
+## 프로덕션 준비 체크리스트(웹 정적 배포)
+- Nginx vhost 설정 확인
+  - `www.trr.co.kr` → `root /srv/traum_homepage/web;` (정적 서빙)
+  - `blog.trr.co.kr` → `root /srv/traum_homepage/traum_blog/public;`
+  - `location /oauth/ { proxy_pass http://127.0.0.1:17178/; }`
+- 디렉터리 존재/권한
+  - `mkdir -p /srv/traum_homepage/web /srv/traum_homepage/traum_blog/public`
+  - 웹 서버 사용자(예: `www-data`)가 읽을 수 있도록 퍼미션 확인
+- (선택) nginx reload 권한 위임
+  - 워크플로는 `sudo -n systemctl reload nginx || sudo -n nginx -s reload || true`로 재시도를 시도합니다.
+  - 비밀번호 없이 재로드를 허용하려면 호스트에서 `sudoers` 항목을 제한적으로 추가하세요(사용자/경로는 환경에 맞게 조정).
+    ```
+    # /etc/sudoers.d/trr-nginx-reload
+    deploy ALL=(root) NOPASSWD:/bin/systemctl reload nginx,/usr/sbin/nginx -s reload
+    ```
+    - `deploy`를 배포 계정으로 치환
+    - 보안상 필요한 커맨드만 허용
+- 검증(예)
+  - `curl -sI https://www.trr.co.kr | sed -n '1,10p'`
+  - 정적 자산 응답 헤더에 `Cache-Control: public, max-age=2592000, immutable` 확인
+  - 스타일/스크립트 변경 시는 쿼리스트링 버전(`?v=YYYYMMDD`)을 갱신
+- 롤백 계획(요약)
+  - vhost를 이전 프록시 구성으로 되돌림: `www/blog`를 `127.0.0.1:17176/17177`로 프록시
+  - 필요 시 `docker compose build web && docker compose up -d web`
 
 ## 로컬 개발 팁
 - 컨테이너 포트 바인딩은 `.env`로 조정 가능합니다(`HTTP_BIND_HOST`, `HOMEPAGE_PORT`).

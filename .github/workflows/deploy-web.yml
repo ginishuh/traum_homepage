@@ -1,30 +1,12 @@
-name: Deploy Web (compose build + up)
+name: Deploy Web (static rsync)
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'src/**'
-      - 'Dockerfile'
-      - 'nginx.conf'
-      - 'docker-compose.yml'
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
-    inputs:
-      force_build:
-        description: '강제로 docker compose build 실행'
-        required: false
-        default: 'false'
-      force_pull:
-        description: '베이스 이미지 최신화(--pull)'
-        required: false
-        default: 'false'
-      no_cache:
-        description: '캐시 없이 빌드(--no-cache, 느림)'
-        required: false
-        default: 'false'
-  schedule:
-    - cron: '0 3 * * 1' # 매주 월요일 03:00 UTC
 
 concurrency:
   group: deploy-web
@@ -75,49 +57,25 @@ jobs:
           : "${DEPLOY_SSH_PORT:=22}"
           ssh-keyscan -p "$DEPLOY_SSH_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy web via SSH
+      - name: Rsync src/ to VPS web root
         run: |
           : "${DEPLOY_SSH_PORT:=22}"
-          REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
+          DEST=/srv/traum_homepage/web/
+          rsync -az --delete \
+            --rsync-path="mkdir -p '$DEST' && rsync" \
+            -e "ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=no" \
+            src/ "$DEPLOY_USER@$DEPLOY_HOST:$DEST"
+
+      - name: (Optional) Reload nginx on host
+        run: |
+          : "${DEPLOY_SSH_PORT:=22}"
           ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash -se -c 'set -euo pipefail; \
-            mkdir -p /srv/traum_homepage; \
-            cd /srv/traum_homepage; \
-            if [ -d .git ]; then \
-              echo Updating existing repo...; \
-              git remote set-url origin \"$REPO_URL\"; \
-              PREV=\"\$(git rev-parse HEAD || echo)\"; \
-              if ! git fetch --prune origin main; then \
-                echo Fetch without token failed, retry with token header...; \
-                git -c http.extraHeader=\"Authorization: Bearer $GITHUB_TOKEN\" fetch --prune origin main; \
-              fi; \
-              git reset --hard origin/main; \
-              NEW=\"\$(git rev-parse HEAD)\"; \
-            else echo Cloning repository\ \(first\ deploy\)…; git clone --depth=1 \"$REPO_URL\" .; PREV=; NEW=\"\$(git rev-parse HEAD)\"; fi; \
-            CHANGED=\"\$(git diff --name-only \"$PREV\" \"$NEW\" -- src Dockerfile nginx.conf docker-compose.yml 2>/dev/null || true)\"; \
-            FORCE=\"${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force_build == 'true') }}\"; \
-            FORCE_PULL=\"${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force_pull == 'true') }}\"; \
-            NO_CACHE=\"${{ github.event_name == 'workflow_dispatch' && inputs.no_cache == 'true' }}\"; \
-            echo PREV=\"$PREV\" NEW=\"$NEW\"; echo CHANGED=\"$CHANGED\"; echo FORCE_BUILD=\"$FORCE\" FORCE_PULL=\"$FORCE_PULL\" NO_CACHE=\"$NO_CACHE\"; \
-            if [ -z \"$PREV\" ] || [ -n \"$CHANGED\" ] || [ \"$FORCE\" = \"true\" ]; then \
-              echo Running docker build...; \
-              export DOCKER_BUILDKIT=1; \
-              BUILD_OPTS=\"\"; \
-              [ \"$FORCE_PULL\" = \"true\" ] && BUILD_OPTS=\"$BUILD_OPTS --pull\"; \
-              [ \"$NO_CACHE\" = \"true\" ] && BUILD_OPTS=\"$BUILD_OPTS --no-cache\"; \
-              if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-                docker compose build $BUILD_OPTS web; \
-              elif command -v docker-compose >/dev/null 2>&1; then \
-                docker-compose build $BUILD_OPTS web; \
-              else echo docker\\ compose\\ not\\ found >&2; exit 1; fi; \
-            else \
-              echo No relevant changes detected; skipping docker build; \
-            fi; \
-            if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then docker compose up -d web; \
-            elif command -v docker-compose >/dev/null 2>&1; then docker-compose up -d web; \
-            else echo docker\\ compose\\ not\\ found >&2; exit 1; fi; \
-            sleep 2; \
-            curl -sI http://127.0.0.1:17176 | sed -n \"1,5p\" || true; \
-            docker ps --format \"table {{.Names}}\t{{.Image}}\t{{.Status}}\" | sed -n \"1,20p\"'"
+            "bash -se -c 'set -e; \
+              if command -v nginx >/dev/null 2>&1; then nginx -t >/dev/null 2>&1 || true; fi; \
+              (sudo -n systemctl reload nginx || sudo -n nginx -s reload || true)'
+
+      - name: Verify HTTP (via host reverse proxy)
+        run: |
+          curl -sI https://www.trr.co.kr | sed -n '1,10p' || true
 
       # Slack 알림 스텝 제거됨 (미사용)
