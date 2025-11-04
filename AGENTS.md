@@ -74,8 +74,8 @@ Scope: Entire repository.
 - Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
 - OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
 - CMS Admin setup
-  - Copy `static/admin/config.dev.yml` to `config.yml` for local development
-  - Copy `static/admin/config.prod.yml` to `config.yml` for production deployment
+  - 로컬 개발: `static/admin/config.dev.yml` → `config.yml`
+  - 프로덕션: GitHub Actions가 `static/admin/config.yml`이 없으면 `config.prod.yml`을 사용해 자동 생성
   - Admin URLs: Local `http://localhost:17177/admin/`, Production `https://blog.trr.co.kr/admin/`
 - Environment flags
   - `DEV_ALLOW_ALL_ORIGINS=0` (set `1` only for local debugging that requires wildcard)

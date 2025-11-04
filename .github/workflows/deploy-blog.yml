@@ -56,6 +56,11 @@ jobs:
           HUGO_ENV: production
         run: |
           set -euo pipefail
+          # Ensure CMS admin config exists in static assets (config.yml is git-ignored)
+          if [ ! -f static/admin/config.yml ]; then
+            cp -f static/admin/config.prod.yml static/admin/config.yml
+            echo "info: created static/admin/config.yml from production template"
+          fi
           echo "HUGO_ENV=$HUGO_ENV"
           hugo --minify --environment "$HUGO_ENV"
           echo "\nBuilt files:" && find public -maxdepth 2 -type f | sed -n '1,50p'

@@ -100,8 +100,8 @@ curl -I -L https://trr.co.kr  # www로 301 확인
   - Authorization callback URL: `https://blog.trr.co.kr/oauth/callback`
   - Private 레포면 `GITHUB_SCOPE=repo`, 공개 레포면 `public_repo`
 - 설정 파일 복사
-  - 운영: `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
   - 로컬: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
+  - 운영: Actions가 자동으로 `config.yml`을 생성합니다(없을 경우 `config.prod.yml`을 사용)
 - 로컬 확인: `http://localhost:17177/admin/`
 - 자동 테스트: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 - `.env` 기본값은 `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0` (테스트 시에만 1로 전환)

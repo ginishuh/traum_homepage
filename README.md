@@ -71,7 +71,7 @@ server {
 - GitHub OAuth App 등록(Homepage/Callback URL은 README의 블로그 섹션 참조)
 - 설정 파일 복사
   - 로컬 개발: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
-  - 운영 배포: `cp traum_blog/static/admin/config.prod.yml traum_blog/static/admin/config.yml`
+  - 운영 배포: 워크플로가 자동으로 `static/admin/config.prod.yml`를 `config.yml`로 복사합니다 (없을 경우)
 - `traum_blog/.env.example`을 복사해 값 설정 후 `oauth` 서비스 기동
   - 운영/실제 로그인: `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0`
   - 로컬 테스트 토큰(팝업 없이 즉시 발급)이 필요할 때만 `OAUTH_TEST_MODE=1`로 전환하고 테스트 후 다시 0으로 되돌리세요.
