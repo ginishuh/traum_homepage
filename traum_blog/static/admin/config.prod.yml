@@ -21,6 +21,23 @@ collections:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
       - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        default: "story"
+        options:
+          - { label: "시장읽기 (market)", value: "market" }
+          - { label: "운영노트 (ops)", value: "ops" }
+          - { label: "비하인드 (behind)", value: "behind" }
+          - { label: "이야기 (story)", value: "story" }
+      - { label: "Summary (홈 섹션 요약)", name: "summary", widget: "text", required: false }
+      - label: "KPIs (홈 섹션 배지)"
+        name: "kpis"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "Label", name: "label", widget: "string" }
+          - { label: "Value", name: "value", widget: "string" }
       - { label: "Description", name: "description", widget: "text", required: false }
       - { label: "Tags", name: "tags", widget: "list", required: false }
       - { label: "Body", name: "body", widget: "markdown" }

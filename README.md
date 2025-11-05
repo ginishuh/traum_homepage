@@ -37,6 +37,7 @@ docker compose build blog && docker compose up -d blog oauth
 # CMS Admin (Decap)
 # - 로컬: http://localhost:17177/admin/
 # - 운영: https://blog.trr.co.kr/admin/
+# - 필드: Title, Date, Draft, Category(select: market|ops|behind|story), Summary, KPIs(list of {label,value}), Description, Tags, Body
 ```
 
 ### 로컬 개발 모드 요약
