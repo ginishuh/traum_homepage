@@ -41,3 +41,133 @@ collections:
       - { label: "Description", name: "description", widget: "text", required: false }
       - { label: "Tags", name: "tags", widget: "list", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
+
+  # 카테고리별 템플릿 컬렉션(동일 폴더에 생성, 기본값/본문 템플릿 제공)
+  - name: "posts_market"
+    label: "시장읽기 템플릿"
+    folder: "traum_blog/content/posts"
+    create: true
+    filter: { field: "category", value: "market" }
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: true }
+      - { label: "Category", name: "category", widget: "select", default: "market", options: ["market"] }
+      - { label: "Summary", name: "summary", widget: "text", required: false }
+      - label: "KPIs"
+        name: "kpis"
+        widget: "list"
+        required: false
+        default: [{ label: "가격", value: "" }, { label: "물량", value: "" }]
+        fields:
+          - { label: "Label", name: "label", widget: "string" }
+          - { label: "Value", name: "value", widget: "string" }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Thumbnail", name: "thumbnail", widget: "image", required: false }
+      - { label: "Cover", name: "cover", widget: "image", required: false }
+      - { label: "OG Image", name: "ogImage", widget: "image", required: false }
+      - label: "Body"
+        name: "body"
+        widget: "markdown"
+        default: |
+          ## 이번 주 시장 요약
+          - 핵심 포인트 3가지
+          
+          ## 가격/수급 동향
+          - 품목 A: 
+          - 품목 B: 
+          
+          ## 리스크/체크리스트
+          - 
+          
+          ## 코멘트
+          - 
+
+  - name: "posts_ops"
+    label: "운영노트 템플릿"
+    folder: "traum_blog/content/posts"
+    create: true
+    filter: { field: "category", value: "ops" }
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: true }
+      - { label: "Category", name: "category", widget: "select", default: "ops", options: ["ops"] }
+      - { label: "Summary", name: "summary", widget: "text", required: false }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Thumbnail", name: "thumbnail", widget: "image", required: false }
+      - { label: "Cover", name: "cover", widget: "image", required: false }
+      - { label: "OG Image", name: "ogImage", widget: "image", required: false }
+      - label: "Body"
+        name: "body"
+        widget: "markdown"
+        default: |
+          ## 배경/문제 정의
+          - 
+          
+          ## 절차(현행)
+          1. 
+          2. 
+          
+          ## 개선안
+          - 
+          
+          ## 산출물/체크리스트
+          - 
+
+  - name: "posts_behind"
+    label: "비하인드 템플릿"
+    folder: "traum_blog/content/posts"
+    create: true
+    filter: { field: "category", value: "behind" }
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: true }
+      - { label: "Category", name: "category", widget: "select", default: "behind", options: ["behind"] }
+      - { label: "Summary", name: "summary", widget: "text", required: false }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Thumbnail", name: "thumbnail", widget: "image", required: false }
+      - { label: "Cover", name: "cover", widget: "image", required: false }
+      - { label: "OG Image", name: "ogImage", widget: "image", required: false }
+      - label: "Body"
+        name: "body"
+        widget: "markdown"
+        default: |
+          ## 비하인드: 맥락
+          - 
+          
+          ## 의사결정 포인트
+          - 
+          
+          ## 결과/배움
+          - 
+
+  - name: "posts_story"
+    label: "이야기 템플릿"
+    folder: "traum_blog/content/posts"
+    create: true
+    filter: { field: "category", value: "story" }
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: true }
+      - { label: "Category", name: "category", widget: "select", default: "story", options: ["story"] }
+      - { label: "Summary", name: "summary", widget: "text", required: false }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Thumbnail", name: "thumbnail", widget: "image", required: false }
+      - { label: "Cover", name: "cover", widget: "image", required: false }
+      - { label: "OG Image", name: "ogImage", widget: "image", required: false }
+      - label: "Body"
+        name: "body"
+        widget: "markdown"
+        default: |
+          ## 이야기
+          - 
+          
+          ## 메모
+          - 
