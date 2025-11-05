@@ -1,0 +1,40 @@
+{{/*
+  블로그 SEO 메타(OG/Twitter) 파셜
+  - 우선순위: .Params.ogImage > .Params.cover > .Params.thumbnail > /brand/logo.svg
+  - 설명: .Params.description 없으면 .Site.Params.description
+  - 카테고리/태그: article:section / article:tag
+  - 게시일: article:published_time
+*/}}
+{{- $title := cond (ne .Title "") (printf "%s | %s" .Title .Site.Title) .Site.Title -}}
+{{- $desc  := or .Params.description .Site.Params.description -}}
+{{- $img   := or .Params.ogImage (or .Params.cover (or .Params.thumbnail "/brand/logo.svg")) -}}
+{{- $imgAbs := $img | absURL -}}
+{{- $url   := .Permalink -}}
+
+<meta name="description" content="{{ $desc }}">
+
+<!-- Open Graph -->
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:url" content="{{ $url }}">
+<meta property="og:site_name" content="{{ .Site.Title }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:image" content="{{ $imgAbs }}">
+
+{{- if .IsPage }}
+  {{ with .Date }}<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
+  {{ with .Params.category }}<meta property="article:section" content="{{ . }}">{{ end }}
+  {{ with .Params.tags }}
+    {{ range . }}<meta property="article:tag" content="{{ . }}">{{ end }}
+  {{ end }}
+{{- end }}
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $desc }}">
+<meta name="twitter:image" content="{{ $imgAbs }}">
+
+<!-- Canonical -->
+<link rel="canonical" href="{{ $url }}">
+
