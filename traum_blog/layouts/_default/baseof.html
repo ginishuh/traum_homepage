@@ -9,18 +9,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/blog-tokens.css?v=20251030" />
-    <link rel="stylesheet" href="/css/blog.css?v=20251030" />
+    <!-- cache-busting: 2025-11-05-01 -->
+    <link rel="stylesheet" href="/css/blog.css?v=2025110501" />
   </head>
   <body>
     <header class="header">
       <div class="header-inner">
         <!-- Logo Lockup -->
         <a href="/" class="logo-lockup">
-          <!-- Logo SVG -->
-          <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="8" fill="#1A4F34"/>
-            <path d="M12 12h16v4h-6v12h-4V16h-6v-4z" fill="white"/>
-          </svg>
+          <!-- 브랜드 로고 (static/brand/logo.svg) -->
+          <img src="/brand/logo.svg" alt="트라움자원 로고" class="logo-icon" />
           <div class="logo-text">
             <span class="logo-title">트라움자원 필드노트</span>
             <span class="logo-subtitle">현장, 시장, 운영의 기록</span>
@@ -107,10 +105,7 @@
       <div style="max-width: var(--container-max); margin: 0 auto;">
         <!-- Logo and Tagline -->
         <div style="margin-bottom: 3rem;">
-          <svg width="64" height="64" viewBox="0 0 84 84" fill="none" style="margin-bottom: 1rem;">
-            <rect width="84" height="84" rx="16" fill="white" fill-opacity="0.1"/>
-            <path d="M25 25h34v8h-13v26h-8V33h-13v-8z" fill="white"/>
-          </svg>
+          <img src="/brand/logo.svg" alt="트라움자원 로고" height="60" style="margin-bottom: 1rem;" />
           <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">트라움자원 필드노트</div>
           <div style="color: rgba(255, 255, 255, 0.7);">현장, 시장, 운영의 기록</div>
         </div>

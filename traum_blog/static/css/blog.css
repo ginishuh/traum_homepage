@@ -84,16 +84,19 @@ main {
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
+  height: 40px;   /* 모바일: 홈페이지와 동일(40px) */
+  width: auto;    /* 비율 유지 */
   flex-shrink: 0;
+  display: block;
 }
 
 @media (min-width: 768px) {
   .logo-icon {
-    width: 40px;
-    height: 40px;
+    height: 60px; /* 데스크톱: 홈페이지 기준보다 10px 축소(60px) */
+    width: auto;
   }
+  /* 데스크톱에서 로고와 텍스트 간격을 조금 더 벌림 */
+  .logo-lockup { gap: var(--space-3); }
 }
 
 .logo-text {
