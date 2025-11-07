@@ -25,6 +25,5 @@ services:
     environment:
       - PORT=3000
     ports:
-      - "127.0.0.1:17203:3000"   # preferred (docs)
-      - "127.0.0.1:17178:3000"   # compat for current prod vhost
+      - "127.0.0.1:17203:3000"   # production vhost uses 17203
     restart: unless-stopped
