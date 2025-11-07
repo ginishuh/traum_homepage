@@ -4,7 +4,7 @@ services:
     image: traum/homepage:local
     container_name: traum-homepage
     ports:
-      - "${HTTP_BIND_HOST:-127.0.0.1}:${HOMEPAGE_PORT:-17201}:8080"   # 비루트 이미지 기본 포트 8080 (로컬루프백 고정)
+      - "127.0.0.1:17201:8080"   # 비루트 이미지 기본 포트 8080 (로컬루프백 고정)
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "test", "-f", "/usr/share/nginx/html/index.html"]
