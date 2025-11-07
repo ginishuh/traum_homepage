@@ -57,7 +57,7 @@ Scope: Entire repository.
   # simple block
   location = /oauth/metrics { return 403; }
   # or require basic auth
-  # location = /oauth/metrics { auth_basic "Restricted"; auth_basic_user_file /etc/nginx/.htpasswd_metrics; proxy_pass http://127.0.0.1:17178/metrics; }
+  # location = /oauth/metrics { auth_basic "Restricted"; auth_basic_user_file /etc/nginx/.htpasswd_metrics; proxy_pass http://127.0.0.1:17203/metrics; }
   ```
   - Admin config MIME: ensure `/admin/config.yml` serves with YAML
   ```nginx
