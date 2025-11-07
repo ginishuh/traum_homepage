@@ -5,8 +5,8 @@
 - 구성: 정적 웹(nginx-unprivileged) + GitHub OAuth 서버(Node) 컨테이너
 
 ## 포트
-- 블로그 웹: 127.0.0.1:17177 → 컨테이너 8080
-- OAuth 서버: 127.0.0.1:17178 → 컨테이너 3000
+- 블로그 웹: 127.0.0.1:17202 → 컨테이너 8080
+- OAuth 서버: 127.0.0.1:17203 → 컨테이너 3000
 
 ## 빠른 시작(로컬)
 ```bash
@@ -17,7 +17,7 @@ cp static/admin/config.dev.yml static/admin/config.yml
 docker compose build blog && docker compose up -d blog
 # (선택) OAuth 서버
 docker compose up -d oauth
-# Admin UI (Decap): http://localhost:17177/admin/
+# Admin UI (Decap): http://localhost:17202/admin/
 #  - 운영 배포 전에는 static/admin/config.prod.yml을 config.yml로 복사하세요.
 ```
 
@@ -38,7 +38,7 @@ docker compose build --no-cache blog && docker compose up -d blog
   curl -fsSL https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js.LICENSE.txt -o static/admin/decap-cms.js.LICENSE.txt
   ```
 - 버전 업그레이드 시에는 위 URL의 버전을 원하는 릴리즈로 바꾸고, `layouts/_default/baseof.html`의 CSS/JS 쿼리 스트링도 함께 갱신하세요.
-- OAuth 리다이렉트/토큰 수신은 **호스트명이 동일해야** 하므로, 로컬 테스트 시 반드시 `http://localhost:17177/admin/`으로 접속하세요.
+- OAuth 리다이렉트/토큰 수신은 **호스트명이 동일해야** 하므로, 로컬 테스트 시 반드시 `http://localhost:17202/admin/`으로 접속하세요.
 
 ## 운영(VPS)
 1) GitHub OAuth App 생성
@@ -69,7 +69,7 @@ server {
     server_name blog.trr.co.kr;
 
     location / {
-        proxy_pass http://127.0.0.1:17177;
+        proxy_pass http://127.0.0.1:17202;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -77,7 +77,7 @@ server {
     }
     # OAuth 엔드포인트 경유
     location /oauth/ {
-        proxy_pass http://127.0.0.1:17178/;
+        proxy_pass http://127.0.0.1:17203/;
         proxy_set_header Host $host;
     }
 }

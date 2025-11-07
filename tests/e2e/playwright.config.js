@@ -4,7 +4,7 @@ const config = {
   testDir: __dirname,
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:17177',
+    baseURL: 'http://localhost:17202',
     headless: true,
   },
   reporter: [['list']]

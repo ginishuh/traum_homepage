@@ -7,7 +7,7 @@
 - 프로덕션 구성(정적 전환)
   - 홈페이지: 호스트 Nginx가 `/srv/www/trr/` 정적 서빙(컨테이너 미사용)
   - 블로그: Hugo 빌드 산출물 `/srv/traum_homepage/traum_blog/public/` 정적 서빙
-  - OAuth: `traum-blog-oauth` (127.0.0.1:17178 → 3000, 컨테이너 유지)
+  - OAuth: `traum-blog-oauth` (127.0.0.1:17203 → 3000, 컨테이너 유지)
 - 리버스 프록시: `/etc/nginx/sites-enabled/trr.conf`
 - TLS: Let’s Encrypt(`certbot`) 자동 갱신
 
@@ -19,7 +19,7 @@
 
 ## 환경변수(.env)
 - 루트: `.env`(예시: `.env.example`)
-  - `HTTP_BIND_HOST=127.0.0.1`, `HOMEPAGE_PORT=17176`
+  - `HTTP_BIND_HOST=127.0.0.1`, `HOMEPAGE_PORT=17201`
 - 블로그 OAuth: `traum_blog/.env`(예시: `.env.example`)
   - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
   - `OAUTH_REDIRECT_URL=https://blog.trr.co.kr/oauth/callback`
@@ -68,18 +68,18 @@ certbot renew --dry-run
 - 프록시 파일: `/etc/nginx/sites-enabled/trr.conf`
   - `trr.co.kr` → `https://www.trr.co.kr` 301
 - `www.trr.co.kr` → root `/srv/www/trr/`
-  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17178/
+  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17203/
 
 ## 검증 체크리스트(정적 전환)
 - `curl -I https://www.trr.co.kr` 200 OK 확인
 - `curl -I https://blog.trr.co.kr/admin/config.yml` → 200, `Content-Type: text/yaml` 확인
 - `curl -I https://www.trr.co.kr/styles.css` 등 정적 자산에 `Cache-Control: public, max-age=2592000, immutable` 확인
-- 블로그 `/admin` 로그인 플로우 정상(Decap CMS OAuth 프록시 127.0.0.1:17178 동작)
+- 블로그 `/admin` 로그인 플로우 정상(Decap CMS OAuth 프록시 127.0.0.1:17203 동작)
 - 외부 공개 포트 무노출(Compose 바인드는 루프백 고정)
 
 ## 롤백 절차(요약)
 1) vhost를 이전 프록시 방식으로 되돌림
-   - `www` → `http://127.0.0.1:17176`, `blog` → `http://127.0.0.1:17177`, `/oauth/` → `http://127.0.0.1:17178/`
+   - `www` → `http://127.0.0.1:17201`, `blog` → `http://127.0.0.1:17202`, `/oauth/` → `http://127.0.0.1:17203/`
 2) 필요 시 컨테이너 복구: `docker compose build web && docker compose up -d web`
 - TLS 발급/갱신: `certbot --nginx -d trr.co.kr -d www.trr.co.kr -d blog.trr.co.kr`
 
@@ -111,7 +111,7 @@ curl -I -L https://trr.co.kr  # www로 301 확인
         try_files $uri =404;
     }
     ```
-- 로컬 확인: `http://localhost:17177/admin/`
+- 로컬 확인: `http://localhost:17202/admin/`
 - 자동 테스트: `OAUTH_TEST_MODE=1 npx playwright test` (사전에 `cd tests/e2e && npm install`)
 - `.env` 기본값은 `DEV_ALLOW_ALL_ORIGINS=0`, `OAUTH_TEST_MODE=0` (테스트 시에만 1로 전환)
 - `.env` 수정 후에는 `docker compose up -d --force-recreate --no-deps oauth` 로 OAuth 컨테이너 재기동

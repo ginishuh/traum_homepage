@@ -60,7 +60,7 @@ test('admin receives OAuth token (test mode) and sends GitHub API with Authoriza
 
   // Ensure blog/oauth are up (best-effort; ignore failures)
   try {
-    await page.goto('http://localhost:17177/admin/', { waitUntil: 'load' });
+    await page.goto('http://localhost:17202/admin/', { waitUntil: 'load' });
   } catch (_) {}
 
   // Act: Open OAuth TEST popup so that window.opener is the admin page

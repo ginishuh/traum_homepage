@@ -22,7 +22,7 @@ Scope: Entire repository.
 ## Env Vars
 - Root `.env` (used by Compose):
   - `HTTP_BIND_HOST` (default `127.0.0.1`)
-  - `HOMEPAGE_PORT` (default `17176`)
+  - `HOMEPAGE_PORT` (default `17201`)
 - Blog OAuth `traum_blog/.env`:
   - Required: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
   - URLs/Origins: `OAUTH_REDIRECT_URL`(e.g., `https://blog.trr.co.kr/oauth/callback`), `ALLOWED_ORIGINS`(e.g., `https://blog.trr.co.kr`)
@@ -49,7 +49,7 @@ Scope: Entire repository.
 - Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
   - `trr.co.kr` → 301 to `https://www.trr.co.kr`.
   - `www.trr.co.kr` → root `/srv/www/trr/` (homepage served statically).
-  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → `127.0.0.1:17178/`.
+  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → `127.0.0.1:17203/`.
 - TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
 - Do not hand-edit lines marked “# managed by Certbot”.
 - Recommended: protect or block `/oauth/metrics` in production
@@ -86,7 +86,7 @@ Scope: Entire repository.
 - CMS Admin setup
   - 로컬 개발: `static/admin/config.dev.yml` → `config.yml`
   - 프로덕션: GitHub Actions가 `static/admin/config.yml`이 없으면 `config.prod.yml`을 사용해 자동 생성
-  - Admin URLs: Local `http://localhost:17177/admin/`, Production `https://blog.trr.co.kr/admin/`
+  - Admin URLs: Local `http://localhost:17202/admin/`, Production `https://blog.trr.co.kr/admin/`
 - Environment flags
   - `DEV_ALLOW_ALL_ORIGINS=0` (set `1` only for local debugging that requires wildcard)
   - `OAUTH_TEST_MODE=0` (set `1` only when using the built-in test token flow)
@@ -101,16 +101,16 @@ Scope: Entire repository.
   - `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`
 
 ## Ports
-- Homepage: 127.0.0.1:17176 → 8080
-- Blog:     127.0.0.1:17177 → 8080
-- OAuth:    127.0.0.1:17178 → 3000
+- Homepage: 127.0.0.1:17201 → 8080
+- Blog:     127.0.0.1:17202 → 8080
+- OAuth:    127.0.0.1:17203 → 3000
 
 ## Reverse proxy
 - Terminate TLS at the host Nginx/Caddy/Traefik.
 - Host routing:
   - `www.trr.co.kr` → `/srv/www/trr/` (static root)
   - `blog.trr.co.kr` → `/srv/traum_homepage/traum_blog/public/` (static root)
-  - `/oauth/` → `http://127.0.0.1:17178/` (Decap CMS OAuth container)
+  - `/oauth/` → `http://127.0.0.1:17203/` (Decap CMS OAuth container)
 
 ## Content workflow
 - Homepage: edit under `src/` then rebuild.
@@ -159,7 +159,7 @@ Granularity
   - OAuth app: Homepage `https://blog.trr.co.kr`, Callback `https://blog.trr.co.kr/oauth/callback`
   - Scope: `public_repo` for public repo, use `repo` for private repo
   - Ensure `traum_blog/static/admin/config.yml` copied from the appropriate template
-  - Reproduce locally: `http://localhost:17177/admin/`
+  - Reproduce locally: `http://localhost:17202/admin/`
   - Test: `OAUTH_TEST_MODE=1 npx playwright test`
 
 

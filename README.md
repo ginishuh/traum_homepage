@@ -17,7 +17,7 @@
 
 ```
 HTTP_BIND_HOST=127.0.0.1
-HOMEPAGE_PORT=17176
+HOMEPAGE_PORT=17201
 ```
 
 ## 로컬 실행
@@ -25,24 +25,24 @@ HOMEPAGE_PORT=17176
 웹은 단순 정적 미리보기면 비컨테이너도 가능하지만, Nginx 헤더/캐시 동작까지 검증하려면 `web` 서비스로 실행합니다.
 
 ```bash
-# 홈페이지 (http://127.0.0.1:17176)
+# 홈페이지 (http://127.0.0.1:17201)
 docker compose build web && docker compose up -d web
 
-# 블로그 (http://127.0.0.1:17177)
+# 블로그 (http://127.0.0.1:17202)
 cd traum_blog
 cp static/admin/config.dev.yml static/admin/config.yml
 # (필요 시) .env에 OAUTH_TEST_MODE=1 설정 후
 docker compose build blog && docker compose up -d blog oauth
 
 # CMS Admin (Decap)
-# - 로컬: http://localhost:17177/admin/
+# - 로컬: http://localhost:17202/admin/
 # - 운영: https://blog.trr.co.kr/admin/
 # - 필드: Title, Date, Draft, Category(select: market|ops|behind|story), Summary, KPIs(list of {label,value}), Description, Tags, Body
 ```
 
 ### 로컬 개발 모드 요약
 - 기본 권장: `docker compose up -d blog oauth` (Admin/OAuth 포함 전체 플로우 검증)
-- 빠른 미리보기(웹만): `cd src && python3 -m http.server 17176 --bind 127.0.0.1` (또는 `npx serve`)
+- 빠른 미리보기(웹만): `cd src && python3 -m http.server 17201 --bind 127.0.0.1` (또는 `npx serve`)
 - Nginx 동작까지 검증: `docker compose up -d web`
 
 ## VPS 배포(프로덕션)
@@ -60,7 +60,7 @@ server {
     listen 80; server_name blog.trr.co.kr;
     root /srv/traum_homepage/traum_blog/public;
     index index.html;
-    location /oauth/ { proxy_pass http://127.0.0.1:17178/; }
+    location /oauth/ { proxy_pass http://127.0.0.1:17203/; }
 }
 ```
 3) TLS는 certbot 또는 Caddy/Traefik 권장.
@@ -68,7 +68,7 @@ server {
 ## 블로그(Decap CMS)
 - 관리페이지
   - 운영: `https://blog.trr.co.kr/admin/`
-  - 로컬: `http://localhost:17177/admin/`
+  - 로컬: `http://localhost:17202/admin/`
 - GitHub OAuth App 등록(Homepage/Callback URL은 README의 블로그 섹션 참조)
 - 설정 파일 복사
   - 로컬 개발: `cp traum_blog/static/admin/config.dev.yml traum_blog/static/admin/config.yml`
@@ -120,7 +120,7 @@ server {
 ### 브랜드 에셋 경로(공용)
 - 저장 위치: `traum_blog/static/brand/`
 - 프로덕션 참조 URL: `https://blog.trr.co.kr/brand/<파일명>.svg`
-- 로컬 참조 URL: `http://127.0.0.1:17177/brand/<파일명>.svg`
+- 로컬 참조 URL: `http://127.0.0.1:17202/brand/<파일명>.svg`
 - 캐시 주의: SVG는 30일 + `immutable` → 교체 시 파일명 버저닝(예: `logo.20251028.svg`)
 
 ## 자동배포(블로그) · GitHub Secrets
@@ -156,7 +156,7 @@ server {
 - Nginx vhost 설정 확인
   - `www.trr.co.kr` → `root /srv/www/trr;` (정적 서빙)
   - `blog.trr.co.kr` → `root /srv/traum_homepage/traum_blog/public;`
-  - `location /oauth/ { proxy_pass http://127.0.0.1:17178/; }`
+  - `location /oauth/ { proxy_pass http://127.0.0.1:17203/; }`
 - 디렉터리 존재/권한
   - `mkdir -p /srv/www/trr /srv/traum_homepage/traum_blog/public`
   - 웹 서버 사용자(예: `www-data`)가 읽을 수 있도록 퍼미션 확인
@@ -175,7 +175,7 @@ server {
   - 정적 자산 응답 헤더에 `Cache-Control: public, max-age=2592000, immutable` 확인
   - 스타일/스크립트 변경 시는 쿼리스트링 버전(`?v=YYYYMMDD`)을 갱신
 - 롤백 계획(요약)
-  - vhost를 이전 프록시 구성으로 되돌림: `www/blog`를 `127.0.0.1:17176/17177`로 프록시
+  - vhost를 이전 프록시 구성으로 되돌림: `www/blog`를 `127.0.0.1:17201/17202`로 프록시
   - 필요 시 `docker compose build web && docker compose up -d web`
 
 ### Nginx: /oauth/metrics 보호(권장)
@@ -187,7 +187,7 @@ location = /oauth/metrics { return 403; }
 # location = /oauth/metrics {
 #   auth_basic "Restricted";
 #   auth_basic_user_file /etc/nginx/.htpasswd_metrics;
-#   proxy_pass http://127.0.0.1:17178/metrics;
+#   proxy_pass http://127.0.0.1:17203/metrics;
 # }
 ```
 

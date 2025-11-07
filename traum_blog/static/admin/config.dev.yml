@@ -2,9 +2,9 @@ backend:
   name: github
   repo: ginishuh/traum_homepage
   branch: main
-  base_url: http://localhost:17177
+  base_url: http://localhost:17202
   auth_endpoint: oauth/auth
-  site_domain: localhost:17177
+  site_domain: localhost:17202
 
 publish_mode: editorial_workflow
 media_folder: "traum_blog/static/uploads"
