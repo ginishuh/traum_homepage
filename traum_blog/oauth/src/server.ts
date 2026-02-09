@@ -1,5 +1,4 @@
 import express from 'express';
-import fetch from 'node-fetch';
 import { Counter, Registry } from 'prom-client';
 import { buildCspHeader, buildPostMessageHtml, randomNonce, PostMessagePayload } from './page.js';
 
