@@ -1,168 +1,73 @@
-# AGENTS.md — Working Rules for Agents/Contributors
+# AGENTS.md - traum_homepage
 
 Scope: Entire repository.
 
 ## Goals
 - Keep this repo simple: static homepage + static blog with minimal infra.
-- Prefer unprivileged containers and loopback binds (no public ports from Compose).
+- Prefer unprivileged containers and loopback binds. Do not expose public ports directly from Compose.
+- Production traffic is terminated by host Nginx/TLS and routed to static files or loopback services.
 
-## Language
-- Interactive responses from agents/helpers: Korean (all conversations must be in Korean).
-- Documentation (README, OPERATIONS, guides, PR template): Korean by default.
-- This file (AGENTS.md) is intentionally written in English; other docs remain Korean.
-- Code comments: Korean by default; keep standard identifiers/terms in original English when needed.
-- Borrowed proper nouns/terms from external docs may remain in English (e.g., Conventional Commits type/scope).
+## Project Structure
+- `src/`: static homepage assets.
+- `traum_blog/`: Hugo/Decap CMS blog and OAuth helper.
+- `docs/OPERATIONS.md`: operational runbook.
+- `docker-compose.yml`, `traum_blog/docker-compose.yml`: local/runtime service definitions.
+- `.github/workflows/`: web/blog deploy workflows.
 
-## Do / Don’t
-- Do use `nginxinc/nginx-unprivileged` and expose 8080 only.
-- Do bind ports on loopback: `127.0.0.1:PORT:8080`.
-- Do not commit secrets. `.env` files are ignored. Use `.env.example`.
-- Do not run dev scripts with `sudo`. If Docker writes files, fix UID/GID mapping.
+## Local Commands
+- Homepage: `docker compose build web && docker compose up -d web`.
+- Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`.
+- OAuth for Decap CMS: `cd traum_blog && docker compose up -d oauth` after setting `traum_blog/.env`.
+- After editing `.env`: `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`.
+
+## VPS 운영 공통 원칙 (/srv)
+- 운영 작업은 항상 대상 리포의 `/srv/<repo>` 경로에서 직접 수행합니다.
+- 작업 시작 전 `pwd`와 `git remote -v`로 리포/원격을 확인합니다.
+- 서로 다른 리포의 배포 스크립트, Compose 파일, 환경 파일을 혼용하지 않습니다.
+- 환경 변수는 대문자 스네이크 케이스를 사용하고, 새 값은 `.env.example` 또는 해당 예제 파일에 설명을 남깁니다.
+- `.env`, 키 파일, 인증서, DB 백업, 토큰은 절대 커밋하지 않습니다.
+- 공개 포트는 최소화하고 가능하면 `127.0.0.1`에 바인딩합니다. 외부 노출은 Nginx/리버스 프록시에서 처리합니다.
+- 배포 전 백업/롤백 경로를 확인하고, 위험 작업은 되돌릴 수 있는 상태에서만 진행합니다.
+- 배포 후에는 같은 리포 기준으로 상태, 헬스체크, 최근 로그를 검증합니다.
+
+## 공통 운영 명령
+- `docker compose ps`: 컨테이너 상태 확인.
+- `docker compose logs --since 10m`: 최근 로그 확인.
+- `/root/scripts/post_deploy_check.sh <repo-name|repo-path> [health_url ...]`: 배포 후 공통 점검.
+- `journalctl -u <service> --since "1 hour ago" --no-pager`: systemd 서비스 장애 추적.
+- `certbot certificates`: 인증서 만료와 도메인 매핑 점검.
+
+## 한국어 응대 원칙
+- 운영 보고, 장애 공유, 작업 결과는 한국어로 작성합니다.
+- 명령어, 경로, 환경 변수는 원문 그대로 백틱(``)으로 표기합니다.
+- 긴급 이슈는 `현상 → 영향 → 조치 → 검증 → 재발 방지` 순서로 간결하게 보고합니다.
+- 날짜/시간은 절대값으로 명시합니다. 예: `2026-04-26 14:30 KST`.
+
 
 ## Env Vars
-- Root `.env` (used by Compose):
-  - `HTTP_BIND_HOST` (default `127.0.0.1`)
-  - `HOMEPAGE_PORT` (default `17201`)
-- Blog OAuth `traum_blog/.env`:
-  - Required: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-  - URLs/Origins: `OAUTH_REDIRECT_URL`(e.g., `https://blog.trr.co.kr/oauth/callback`), `ALLOWED_ORIGINS`(e.g., `https://blog.trr.co.kr`)
-  - Scope: `GITHUB_SCOPE` = `public_repo`(public repo) or `repo`(private repo)
-  - Behavior flags: `OAUTH_TEST_MODE`(0/1), `DEV_ALLOW_ALL_ORIGINS`(0/1), `OAUTH_AUTOCLOSE`(1), `OAUTH_AUTOCLOSE_DELAY_MS`(400), `OAUTH_SUCCESS_BURST_INTERVAL_MS`(400), `OAUTH_SUCCESS_BURST_ATTEMPTS`(12)
-  - Metrics (optional): `METRICS_ENABLED`(0/1), `METRICS_BASIC_AUTH_USER`, `METRICS_BASIC_AUTH_PASS`
-  - Optional: `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`
+- Root `.env`: `HTTP_BIND_HOST` (default `127.0.0.1`), `HOMEPAGE_PORT` (default `17201`).
+- Blog OAuth `traum_blog/.env`: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `OAUTH_REDIRECT_URL`, `ALLOWED_ORIGINS`, `GITHUB_SCOPE`.
+- Optional metrics/basic auth variables must stay out of git and be documented in example files when changed.
 
-## CI / CD (GitHub Actions)
-- Blog auto-deploy: `.github/workflows/deploy-blog.yml`
-  - Trigger: `traum_blog/**` changes or Decap CMS commits.
-  - Action: Hugo build → rsync to `/srv/traum_homepage/traum_blog/public/` (no container restart).
-  - Secrets required: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT`(optional), `DEPLOY_SSH_KEY`.
-- Web CD: `.github/workflows/deploy-web.yml`
-  - Trigger: `src/**` changes.
-  - Action: rsync `src/` → `/srv/www/trr/` (no container in production). Optionally reload host nginx.
-- Optional Slack: `SLACK_WEBHOOK_URL` (if present, sends status notifications).
+## Runtime and Network
+- Web/Blog runtime images use `nginxinc/nginx-unprivileged` and expose container port `8080`.
+- OAuth runtime uses `USER node`; do not switch back to root.
+- Host ports:
+  - Homepage: `127.0.0.1:17201 -> 8080`
+  - Blog: `127.0.0.1:17202 -> 8080`
+  - OAuth: `127.0.0.1:17203 -> 3000`
+- Active host vhost: `/etc/nginx/sites-enabled/trr.conf`.
+- Do not hand-edit Nginx lines marked `# managed by Certbot`.
 
-## Runtime users (non-root)
-- Web/Blog runtime images are `nginxinc/nginx-unprivileged` (non-root 8080).
-- OAuth runtime uses `USER node` (non-root). Do not switch back to root.
+## Build and Cache
+- Prefer cacheless builds for static asset deploy checks:
+  - Blog: `cd traum_blog && docker compose build --no-cache blog && docker compose up -d blog`
+  - Web: `docker compose build --no-cache web && docker compose up -d web`
+- When deploying styles/scripts, bump query-string versions in templates.
 
-## Nginx / TLS (host)
-- Active vhost: `/etc/nginx/sites-enabled/trr.conf`.
-  - `trr.co.kr` → 301 to `https://www.trr.co.kr`.
-  - `www.trr.co.kr` → root `/srv/www/trr/` (homepage served statically).
-  - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → `127.0.0.1:17203/`.
-- TLS via certbot (`/etc/letsencrypt/live/trr.co.kr/…`).
-- Do not hand-edit lines marked “# managed by Certbot”.
-- Recommended: protect or block `/oauth/metrics` in production
-  ```nginx
-  # simple block
-  location = /oauth/metrics { return 403; }
-  # or require basic auth
-  # location = /oauth/metrics { auth_basic "Restricted"; auth_basic_user_file /etc/nginx/.htpasswd_metrics; proxy_pass http://127.0.0.1:17203/metrics; }
-  ```
-  - Admin config MIME: ensure `/admin/config.yml` serves with YAML
-  ```nginx
-  # inside blog.trr.co.kr server block
-  location = /admin/config.yml {
-    types { };
-    default_type text/yaml;
-    try_files $uri =404;
-  }
-  ```
-  - IPv6 policy: 기본적으로 `listen [::]:443` 비활성(경고 방지). IPv6 활성 시 모든 vhost의 `listen` 옵션 조합을 일치시키고 `nginx -t` 경고 0 유지.
-
-## DNS
-- Keep existing nameservers (e.g., M365). Only add A records:
-  - `@`, `www`, `blog` → VPS IP.
-- SOA/NS remain managed by the DNS provider.
-
-## Ops Runbook
-- See `docs/OPERATIONS.md` for common commands, checks, and procedures.
-
-## Local commands
-- 권장(로컬 E2E): Admin(/admin)까지 개발 시 `docker compose`로 블로그+OAuth를 실행합니다.
-- Homepage: `docker compose build web && docker compose up -d web` (정적 미리보기만 필요하면 비컨테이너 서버도 가능)
-- Blog: `cd traum_blog && docker compose build blog && docker compose up -d blog`
-- OAuth for Decap CMS: in `cd traum_blog`, set `.env` then `docker compose up -d oauth`
-- CMS Admin setup
-  - 로컬 개발: `static/admin/config.dev.yml` → `config.yml`
-  - 프로덕션: GitHub Actions가 `static/admin/config.yml`이 없으면 `config.prod.yml`을 사용해 자동 생성
-  - Admin URLs: Local `http://localhost:17202/admin/`, Production `https://blog.trr.co.kr/admin/`
-- Environment flags
-  - `DEV_ALLOW_ALL_ORIGINS=0` (set `1` only for local debugging that requires wildcard)
-  - `OAUTH_TEST_MODE=0` (set `1` only when using the built-in test token flow)
-  - After editing `.env`, run `docker compose up -d --force-recreate --no-deps oauth`
-
-## Build/Cache
-- Always prefer cacheless builds for static assets to avoid stale bundles (immutable caching in Nginx/Hugo output).
-  - Blog (local): `cd traum_blog && docker compose build --no-cache blog && docker compose up -d blog`
-  - Web  (local): `docker compose build --no-cache web && docker compose up -d web`
-- When deploying styles/scripts, bump query-string versions in templates (e.g., `/css/blog.css?v=YYYYMMDD`).
-- After changing `traum_blog/.env`, recreate only the OAuth container to apply new secrets/scopes:
-  - `cd traum_blog && docker compose up -d --force-recreate --no-deps oauth`
-
-## Ports
-- Homepage: 127.0.0.1:17201 → 8080
-- Blog:     127.0.0.1:17202 → 8080
-- OAuth:    127.0.0.1:17203 → 3000
-
-## Reverse proxy
-- Terminate TLS at the host Nginx/Caddy/Traefik.
-- Host routing:
-  - `www.trr.co.kr` → `/srv/www/trr/` (static root)
-  - `blog.trr.co.kr` → `/srv/traum_homepage/traum_blog/public/` (static root)
-  - `/oauth/` → `http://127.0.0.1:17203/` (Decap CMS OAuth container)
-
-## Content workflow
-- Homepage: edit under `src/` then rebuild.
-- Blog: write posts in Decap CMS (`/admin`) → commits/PRs to this repo.
-
-## Style / Git
-- Keep README accurate. Update `.env.example` when variables change.
-- Docs are Korean by default; file names/headings may be English when appropriate.
-- No long-lived feature branches unless necessary.
-
-## Commit Convention (Conventional Commits)
-- Format: `type(scope)!: subject`
-  - `type`: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|content|post|blog`
-  - `scope` (e.g.): `web|blog|oauth|docs|ci|infra|nginx|compose|deps`
-  - `subject`: concise English sentence, no trailing period (≤ 200 chars)
-- Body (optional): motivation/impact (wrap at ~72 chars).
-- Footer (optional): `Closes #123`, `Refs #456`; breaking changes via `BREAKING CHANGE:`.
-- Breaking: add `!` after scope and describe in footer.
-- Revert: `revert: <short-hash> <original subject>` with reason link.
-
-Examples
-- `feat(blog): add archive global search`
-- `fix(oauth): return 400 when code missing`
-- `docs: add OPERATIONS.md and link from README`
-- `ci(web): add deploy workflow (SSH compose build+up)`
-- `refactor(web): extract nginx header templates`
-- `chore(deps): update hugo base image`
-- `revert: 1a2b3c4 fix(oauth): return 400 when code missing`
-
-Granularity
-- One logical change per commit; separate refactors from behavior changes.
-- Squash before merge if PR contains fixup/cleanup commits.
-
-## PR / Review Rules
-- PR title uses Conventional Commits (`type(scope): subject`), subject in English.
-- Use `.github/pull_request_template.md`.
-- Progress updates go to PR comments only. Keep the PR body structure; only tick checkboxes.
-- Do not edit PR body text except checkboxes. Use comments or follow-up commits for explanations.
-- Commitlint: header max 200; otherwise follow Conventional rules.
-- Address review feedback in small commits and summarize in a comment.
-
-## Troubleshooting
-- File ownership issues: `sudo chown -R $USER:$USER <path>` then avoid root containers.
-- Port conflicts: adjust `.env` ports; keep loopback binds.
-- GitHub OAuth login fails
-  - OAuth app: Homepage `https://blog.trr.co.kr`, Callback `https://blog.trr.co.kr/oauth/callback`
-  - Scope: `public_repo` for public repo, use `repo` for private repo
-  - Ensure `traum_blog/static/admin/config.yml` copied from the appropriate template
-  - Reproduce locally: `http://localhost:17202/admin/`
-  - Test: `OAUTH_TEST_MODE=1 npx playwright test`
-
-
-## Commitlint
-- Runs on PRs only (direct pushes not enforced). Blog CMS direct commits/deploy not affected.
-- Rules: Conventional Commits; header max 200. See `.commitlintrc.yml`.
+## Style and Git
+- Documentation is Korean by default; this AGENTS file may keep short English labels where useful.
+- Keep README and `.env.example` files accurate when variables or workflows change.
+- Use Conventional Commits. Examples: `fix(oauth): return 400 when code missing`, `docs: update operations runbook`.
+- PR titles use Conventional Commits and the repository PR template.
+- Do not edit PR body text except checkboxes; use comments or commits for progress details.
