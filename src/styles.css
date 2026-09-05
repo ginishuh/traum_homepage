@@ -1021,18 +1021,18 @@ section {
 }
 
 .launcher-item__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.launcher-item__icon--phone { background: var(--accent-color); color: var(--primary-color); }
-.launcher-item__icon--kakao { background: #fee500; color: #3c1e1e; }
-.launcher-item__icon--talk { background: #1ec800; color: white; }
+.launcher-item__icon--phone { background: var(--primary-color); color: white; }
+.launcher-item__icon--kakao { background: #fee500; color: #191919; }
+.launcher-item__icon--talk { background: #03c75a; color: white; }
 .launcher-item__icon--naver { background: #03c75a; color: white; }
 
 .launcher-item__text {

@@ -250,7 +250,7 @@
 
 .launcher-item--chat:hover { background: var(--primary-dark); }
 .launcher-item--chat .launcher-item__text small { color: rgba(255, 255, 255, 0.8); }
-.launcher-item__icon--chat { background: rgba(255, 255, 255, 0.16); color: white; }
+.launcher-item__icon--chat { background: rgba(255, 255, 255, 0.16); color: white; border-radius: 9px; }
 
 body.chat-open .launcher { display: none; }
 
