@@ -1,5 +1,7 @@
 // Kakao Map initialization
-kakao.maps.load(function() {
+if (!window.kakao || !kakao.maps) {
+  console.warn("Kakao Maps SDK not loaded");
+} else kakao.maps.load(function() {
   // 트라움자원 좌표
   const lat = 37.680957;
   const lng = 126.548056;

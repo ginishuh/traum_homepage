@@ -67,29 +67,6 @@ scrollTopBtn.addEventListener('click', () => {
   });
 });
 
-// Intersection Observer for animations
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: '0px 0px -100px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-    }
-  });
-}, observerOptions);
-
-// Observe elements
-document.querySelectorAll('.service-card, .process-step, .feature, .permit-card').forEach(el => {
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(30px)';
-  el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  observer.observe(el);
-});
-
 // Number animation for stats
 const animateNumbers = () => {
   const numbers = document.querySelectorAll('.stat-number');
@@ -125,22 +102,6 @@ if (statsSection) {
   statsObserver.observe(statsSection);
 }
 
-// Lazy loading for images
-const imageObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const img = entry.target;
-      img.src = img.dataset.src || img.src;
-      img.classList.add('loaded');
-      imageObserver.unobserve(img);
-    }
-  });
-}, { rootMargin: '50px' });
-
-document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-  imageObserver.observe(img);
-});
-
 // Form validation (if you add a contact form later)
 const validateForm = (form) => {
   const inputs = form.querySelectorAll('input[required], textarea[required]');
@@ -158,12 +119,35 @@ const validateForm = (form) => {
   return isValid;
 };
 
-// Prevent default for floating buttons to ensure they work properly
-document.querySelectorAll('.floating-buttons a').forEach(button => {
-  button.addEventListener('click', function(e) {
-    // Let the default action happen for external links
-    if (this.target === '_blank') {
-      return true;
+// 문의하기 런처 (전화·카카오·톡톡·예약 메뉴)
+const launcher = document.querySelector('.launcher');
+const launcherBtn = document.querySelector('.launcher-btn');
+const launcherMenu = document.querySelector('.launcher-menu');
+
+const setLauncher = (open) => {
+  if (!launcher) return;
+  launcher.classList.toggle('open', open);
+  launcherBtn.setAttribute('aria-expanded', String(open));
+  launcherMenu.hidden = !open;
+};
+
+if (launcher) {
+  launcherBtn.addEventListener('click', () => {
+    setLauncher(launcherMenu.hidden);
+  });
+  document.querySelectorAll('.js-open-launcher').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      setLauncher(true);
+      launcherMenu.querySelector('a').focus();
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!launcherMenu.hidden && !launcher.contains(e.target) && !e.target.closest('.js-open-launcher')) {
+      setLauncher(false);
     }
   });
-});
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !launcherMenu.hidden) setLauncher(false);
+  });
+}
