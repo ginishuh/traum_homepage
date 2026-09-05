@@ -70,6 +70,30 @@ certbot renew --dry-run
 - `www.trr.co.kr` → root `/srv/www/trr/`
   - `blog.trr.co.kr` → root `/srv/traum_homepage/traum_blog/public/`, `/oauth/` → 127.0.0.1:17203/
 
+## 문의 챗봇 '한지수' (chat/)
+- 컨테이너: `docker compose build chat && docker compose up -d chat` → `127.0.0.1:17204`(루프백). 시크릿은 루트 `.env`에만(`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`). 예시는 `.env.example`.
+- 호스트 Nginx `www.trr.co.kr` server 블록에 아래를 추가(SSE라 버퍼링 끔, 남용 제한):
+  ```
+  limit_req_zone $binary_remote_addr zone=trr_chat:1m rate=10r/m;   # http 블록
+
+  location /api/chat/ {
+    limit_req zone=trr_chat burst=5 nodelay;
+    limit_req_status 429;
+    proxy_pass http://127.0.0.1:17204/api/chat/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 120s;
+    client_max_body_size 16k;
+  }
+  ```
+- 끄기: `.env`에 `CHAT_ENABLED=false` 후 `docker compose up -d --force-recreate --no-deps chat`. 위젯은 전화 안내로 폴백.
+- 지식 수정: `chat/knowledge.md` 편집 → 이미지 재빌드·재기동. 답변 규칙은 `chat/prompts.py`.
+- 점검: `curl -s http://127.0.0.1:17204/api/chat/health` → `enabled: true`. 접수 데이터는 볼륨 `chat-data`의 SQLite(`inquiries`), 90일 보관.
+- 텔레그램: 알림 전용 봇 `@trr_hanjisu_bot`, 그룹 "트라움 문의". 토큰 유출 시 BotFather `/revoke` 후 `.env` 교체.
+
 ## 검증 체크리스트(정적 전환)
 - `curl -I https://www.trr.co.kr` 200 OK 확인
 - `curl -I https://blog.trr.co.kr/admin/config.yml` → 200, `Content-Type: text/yaml` 확인

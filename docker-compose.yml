@@ -11,3 +11,20 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+  chat:
+    build: ./chat
+    image: traum/chat:local
+    container_name: traum-chat
+    env_file:
+      - .env
+    environment:
+      CHAT_DB_PATH: /data/chat.sqlite3
+    volumes:
+      - chat-data:/data
+    ports:
+      - "${HTTP_BIND_HOST:-127.0.0.1}:${CHAT_PORT:-17204}:8000"   # 챗봇 API (루프백 고정, 호스트 nginx가 /api/chat/ 프록시)
+    restart: unless-stopped
+
+volumes:
+  chat-data:
