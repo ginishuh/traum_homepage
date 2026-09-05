@@ -78,6 +78,7 @@ certbot renew --dry-run
 
   location /api/chat/ {
     limit_req zone=trr_chat burst=5 nodelay;
+    limit_req_status 429;
     proxy_pass http://127.0.0.1:17204/api/chat/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;

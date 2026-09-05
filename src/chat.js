@@ -172,8 +172,8 @@
         body: JSON.stringify({ session_id: sessionId, message }),
       });
       if (!r.ok) {
-        let reason = 'error';
-        try { reason = (await r.json()).error || reason; } catch (e) { /* ignore */ }
+        let reason = r.status === 429 ? 'rate_limited' : 'error';
+        try { reason = (await r.json()).error || reason; } catch (e) { /* nginx 429는 본문이 HTML */ }
         bot.remove();
         showFallback(reason);
         return;
