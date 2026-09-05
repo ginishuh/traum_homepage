@@ -34,6 +34,7 @@ window.addEventListener('scroll', () => {
 // Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
+    if (this.classList.contains('js-open-launcher')) return; // 문의 버튼은 스크롤하지 않고 런처만 연다
     e.preventDefault();
     const target = document.querySelector(this.getAttribute('href'));
     if (target) {
@@ -138,8 +139,13 @@ if (launcher) {
   document.querySelectorAll('.js-open-launcher').forEach(el => {
     el.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       setLauncher(true);
-      launcherMenu.querySelector('a').focus();
+      // 터치 기기에서는 포커스 이동이 화면을 튀게 하므로 포인터 기기에서만
+      if (window.matchMedia('(hover: hover)').matches) {
+        const first = launcherMenu.querySelector('button, a');
+        if (first) first.focus();
+      }
     });
   });
   document.addEventListener('click', (e) => {
