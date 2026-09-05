@@ -42,6 +42,7 @@
   height: 34px;
   border-radius: 50%;
   background: white;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -49,8 +50,10 @@
 }
 
 .chat__avatar img {
-  width: 24px;
-  height: auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
   display: block;
 }
 
@@ -250,7 +253,8 @@
 
 .launcher-item--chat:hover { background: var(--primary-dark); }
 .launcher-item--chat .launcher-item__text small { color: rgba(255, 255, 255, 0.8); }
-.launcher-item__icon--chat { background: rgba(255, 255, 255, 0.16); color: white; border-radius: 9px; }
+.launcher-item__icon--chat { background: white; color: white; border-radius: 50%; overflow: hidden; }
+.launcher-item__icon--chat img { width: 34px; height: 34px; object-fit: cover; display: block; }
 
 body.chat-open .launcher { display: none; }
 
