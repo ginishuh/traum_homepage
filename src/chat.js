@@ -195,9 +195,31 @@
     }
   };
 
+  // 모바일 키보드: 보이는 창(visualViewport) 크기에 패널을 맞춰 헤더·대화가 위로 밀려나지 않게
+  const panel = root.querySelector('.chat__panel');
+  const vv = window.visualViewport;
+  const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+  const fitViewport = () => {
+    if (!vv || root.hidden || !isMobile()) return;
+    panel.style.height = Math.round(vv.height) + 'px';
+    panel.style.transform = 'translateY(' + Math.round(vv.offsetTop) + 'px)';
+    scrollDown();
+  };
+  const resetViewport = () => {
+    panel.style.height = '';
+    panel.style.transform = '';
+  };
+  if (vv) {
+    vv.addEventListener('resize', fitViewport);
+    vv.addEventListener('scroll', fitViewport);
+  }
+  input.addEventListener('focus', () => { setTimeout(fitViewport, 300); setTimeout(fitViewport, 700); });
+
   const open = async () => {
     root.hidden = false;
     document.body.classList.add('chat-open');
+    if (isMobile()) window.scrollTo(0, 0);
+    fitViewport();
     const launcherMenu = document.querySelector('.launcher-menu');
     const launcherBtn = document.querySelector('.launcher-btn');
     if (launcherMenu && launcherBtn) { launcherMenu.hidden = true; launcherBtn.setAttribute('aria-expanded', 'false'); }
@@ -215,6 +237,7 @@
   const close = () => {
     root.hidden = true;
     document.body.classList.remove('chat-open');
+    resetViewport();
   };
 
   document.querySelectorAll('.js-open-chat').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); open(); }));
