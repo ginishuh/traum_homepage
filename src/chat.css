@@ -267,6 +267,10 @@
 body.chat-open .launcher { display: none; }
 
 @media (max-width: 768px) {
+  body.chat-open { overflow: hidden; }
+}
+
+@media (max-width: 768px) {
   .chat {
     inset: 0;
   }
@@ -275,5 +279,6 @@ body.chat-open .launcher { display: none; }
     width: 100%;
     height: 100%;
     border-radius: 0;
+    transform-origin: top left;
   }
 }
