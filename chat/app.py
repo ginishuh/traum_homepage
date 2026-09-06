@@ -221,28 +221,52 @@ async def telegram_send(text: str, timeout_sec: float = 5.0) -> bool:
     return False
 
 
-_retry_tasks: set = set()
+_resend_lock = asyncio.Lock()  # 재전송 순회는 한 번에 하나만
+_inflight: set[str] = set()  # 요청 경로에서 지금 보내는 중인 접수 id (재전송 대상에서 제외)
+_retry_task: asyncio.Task[None] | None = None
+
+
+async def notify_inquiry(lid: str, text: str) -> bool:
+    """요청 경로의 최초 전송. 보내는 동안 같은 접수가 재전송 순회에 잡히지 않게 표시하고,
+    실패하면 notified=0으로 남겨 30초 뒤 재시도(대기 중인 예약이 있으면 그것에 합류)와 주기 재전송에 맡긴다."""
+    _inflight.add(lid)
+    try:
+        ok = await telegram_send(text)
+        if ok:
+            store.mark_notified(lid)
+    finally:
+        _inflight.discard(lid)
+    if not ok:
+        schedule_retry()
+    return ok
 
 
 def schedule_retry(delay_sec: float = 30.0) -> None:
+    """알림 실패 직후 한 번 더 시도하도록 예약한다(주기 루프와 별개). 대기 중인 예약이 있으면 그대로 둔다."""
+    global _retry_task
+    if _retry_task is not None and not _retry_task.done():
+        return
+
     async def _later() -> None:
         await asyncio.sleep(delay_sec)
         resent = await retry_unnotified()
         if resent:
             log.info("resent %s unnotified inquiry(ies) after delay", resent)
 
-    task = asyncio.create_task(_later())
-    _retry_tasks.add(task)
-    task.add_done_callback(_retry_tasks.discard)
+    _retry_task = asyncio.create_task(_later())
 
 
 async def retry_unnotified() -> int:
+    """전송 실패로 남은 접수를 다시 보낸다. 잠금 안에서 목록을 새로 읽어 다른 순회·요청 경로와 겹쳐도 한 번만 보낸다."""
     sent = 0
-    for row in store.unnotified(S.notify_retry_days):
-        summary = summarize(store.history(row["session_id"], 12))
-        if await telegram_send(format_inquiry(row["id"], row["kind"], row, summary)):
-            store.mark_notified(row["id"])
-            sent += 1
+    async with _resend_lock:
+        for row in store.unnotified(S.notify_retry_days):
+            if row["id"] in _inflight:
+                continue
+            summary = summarize(store.history(row["session_id"], 12))
+            if await telegram_send(format_inquiry(row["id"], row["kind"], row, summary)):
+                store.mark_notified(row["id"])
+                sent += 1
     return sent
 
 
@@ -473,11 +497,7 @@ async def inquiry(body: InquiryIn, request: Request):
               "address": body.address.strip(), "phone": phone, "note": body.note.strip()}
     iid = store.add_inquiry(sid, "inquiry", fields)
     store.add_message(sid, "user", f"[접수 완료 {iid}] {fields['item']} / {fields['quantity']} / {fields['region']}")
-    ok = await telegram_send(format_inquiry(iid, "inquiry", fields, summarize(store.history(sid, 12))))
-    if ok:
-        store.mark_notified(iid)
-    else:
-        schedule_retry()
+    ok = await notify_inquiry(iid, format_inquiry(iid, "inquiry", fields, summarize(store.history(sid, 12))))
     return {"ok": True, "id": iid, "notified": ok}
 
 
@@ -492,9 +512,5 @@ async def handoff(body: HandoffIn, request: Request):
     fields = {"phone": phone, "note": body.reason.strip()}
     iid = store.add_inquiry(sid, "handoff", fields)
     store.add_message(sid, "user", f"[담당자 연결 요청 {iid}]")
-    ok = await telegram_send(format_inquiry(iid, "handoff", fields, summarize(store.history(sid, 12))))
-    if ok:
-        store.mark_notified(iid)
-    else:
-        schedule_retry()
+    ok = await notify_inquiry(iid, format_inquiry(iid, "handoff", fields, summarize(store.history(sid, 12))))
     return {"ok": True, "id": iid, "notified": ok}
