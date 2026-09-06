@@ -9,7 +9,7 @@
   const closeBtn = root.querySelector('.chat__close');
   const API = '/api/chat';
   const PHONE = '02-6140-6747';
-  const GREETING = '안녕하세요, 문의 담당 한지수입니다. 품목·영업시간 안내와 수거 요청 접수를 도와드려요.';
+  const GREETING = '안녕하세요, 트라움자원 AI 상담사 한지수입니다. 품목·영업시간 안내와 수거 요청 접수를 도와드려요.';
   const CHIPS = ['폐지 수거 요청', '고철·비철도 되나요?', '영업시간·위치'];
 
   let sessionId = null;

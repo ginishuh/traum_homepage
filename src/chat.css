@@ -241,20 +241,6 @@
 .chat__send:disabled { opacity: 0.5; cursor: default; }
 
 
-.launcher-item--chat {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  width: 100%;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.launcher-item--chat:hover { background: var(--primary-dark); }
-.launcher-item--chat .launcher-item__text small { color: rgba(255, 255, 255, 0.8); }
-.launcher-item__icon--chat { background: white; color: white; border-radius: 50%; overflow: hidden; }
-.launcher-item__icon--chat img { width: 34px; height: 34px; object-fit: cover; display: block; }
 
 body.chat-open .launcher { display: none; }
 
