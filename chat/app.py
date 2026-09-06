@@ -64,6 +64,8 @@ class Settings:
     telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
     telegram_api_base = os.environ.get("TELEGRAM_API_BASE", "https://api.telegram.org")
     phone_fallback = os.environ.get("CHAT_PHONE", "02-6140-6747")
+    maintenance_interval_sec = int(os.environ.get("CHAT_MAINTENANCE_INTERVAL_SEC", "600"))
+    notify_retry_days = int(os.environ.get("CHAT_NOTIFY_RETRY_DAYS", "7"))
 
 
 S = Settings()
@@ -147,6 +149,21 @@ class Store:
         self.conn.commit()
         return iid
 
+    def unnotified(self, days: int) -> list[dict[str, str]]:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
+        rows = self.conn.execute(
+            "SELECT id, session_id, kind, item, quantity, region, address, phone, note FROM inquiries"
+            " WHERE notified=0 AND created_at >= ? ORDER BY created_at",
+            (cutoff,),
+        ).fetchall()
+        keys = ("id", "session_id", "kind", "item", "quantity", "region", "address", "phone", "note")
+        return [dict(zip(keys, r)) for r in rows]
+
+    def is_notified(self, iid: str) -> bool:
+        """재전송 순회가 각 행을 보내기 직전에 다시 확인한다(순회 시작 때 읽은 목록은 그 사이 바뀔 수 있다)."""
+        row = self.conn.execute("SELECT notified FROM inquiries WHERE id=?", (iid,)).fetchone()
+        return bool(row and row[0])
+
     def mark_notified(self, iid: str) -> None:
         self.conn.execute("UPDATE inquiries SET notified=1 WHERE id=?", (iid,))
         self.conn.commit()
@@ -191,21 +208,86 @@ def ip_hash(ip: str) -> str:
 # ---------------------------------------------------------------------------
 # 텔레그램 알림 (보내기만)
 # ---------------------------------------------------------------------------
-async def telegram_send(text: str) -> bool:
+async def telegram_send(text: str, timeout_sec: float = 5.0) -> bool:
+    """텔레그램 그룹으로 전송. 요청 경로에서는 한 번만 짧게 시도하고, 실패한 접수는 notified=0으로 남아
+    30초 뒤 재시도와 주기 재전송의 대상이 된다."""
     if not S.telegram_token or not S.telegram_chat_id:
         log.warning("telegram not configured; notification skipped")
         return False
     url = f"{S.telegram_api_base}/bot{S.telegram_token}/sendMessage"
     try:
-        async with httpx.AsyncClient(timeout=10) as http:
+        async with httpx.AsyncClient(timeout=timeout_sec) as http:
             r = await http.post(url, json={"chat_id": S.telegram_chat_id, "text": text, "disable_web_page_preview": True})
-            ok = r.status_code == 200 and r.json().get("ok") is True
-            if not ok:
-                log.error("telegram send failed: %s %s", r.status_code, r.text[:200])
-            return ok
-    except Exception as e:  # noqa: BLE001
-        log.error("telegram send error: %s", e)
-        return False
+            if r.status_code == 200 and r.json().get("ok") is True:
+                return True
+            log.error("telegram send failed: %s %s", r.status_code, r.text[:200])
+    except (httpx.HTTPError, ValueError):
+        log.exception("telegram send error")
+    return False
+
+
+_resend_lock = asyncio.Lock()  # 재전송 순회는 한 번에 하나만
+_inflight: set[str] = set()  # 요청 경로에서 지금 보내는 중인 접수 id (재전송 대상에서 제외)
+_retry_task: asyncio.Task[None] | None = None
+
+
+async def notify_inquiry(lid: str, text: str) -> bool:
+    """요청 경로의 최초 전송. 보내는 동안 같은 접수가 재전송 순회에 잡히지 않게 표시하고,
+    실패하면 notified=0으로 남겨 30초 뒤 재시도(대기 중인 예약이 있으면 그것에 합류)와 주기 재전송에 맡긴다."""
+    _inflight.add(lid)
+    try:
+        ok = await telegram_send(text)
+        if ok:
+            store.mark_notified(lid)
+    finally:
+        _inflight.discard(lid)
+    if not ok:
+        schedule_retry()
+    return ok
+
+
+def schedule_retry(delay_sec: float = 30.0) -> None:
+    """알림 실패 직후 한 번 더 시도하도록 예약한다(주기 루프와 별개). 대기 중인 예약이 있으면 그대로 둔다."""
+    global _retry_task
+    if _retry_task is not None and not _retry_task.done():
+        return
+
+    async def _later() -> None:
+        await asyncio.sleep(delay_sec)
+        resent = await retry_unnotified()
+        if resent:
+            log.info("resent %s unnotified inquiry(ies) after delay", resent)
+
+    _retry_task = asyncio.create_task(_later())
+
+
+async def retry_unnotified() -> int:
+    """전송 실패로 남은 접수를 다시 보낸다. 잠금 안에서 목록을 새로 읽고, 각 행은 보내기 직전에 전송 중·이미 전송됨을 다시 확인해 다른 순회·요청 경로와 겹쳐도 한 번만 보낸다."""
+    sent = 0
+    async with _resend_lock:
+        for row in store.unnotified(S.notify_retry_days):
+            if row["id"] in _inflight or store.is_notified(row["id"]):
+                continue
+            summary = summarize(store.history(row["session_id"], 12))
+            if await telegram_send(format_inquiry(row["id"], row["kind"], row, summary)):
+                store.mark_notified(row["id"])
+                sent += 1
+    return sent
+
+
+async def maintenance_loop() -> None:
+    """주기 작업: 미전송 접수 재전송 + 보관 기간 지난 데이터 삭제."""
+    while True:
+        try:
+            await asyncio.sleep(S.maintenance_interval_sec)
+            resent = await retry_unnotified()
+            if resent:
+                log.info("resent %s unnotified inquiry(ies)", resent)
+            store.purge(S.retention_days)
+        except asyncio.CancelledError:
+            raise
+        except (sqlite3.Error, httpx.HTTPError, ValueError):
+            log.exception("maintenance loop iteration failed")
 
 
 def format_inquiry(iid: str, kind: str, f: dict[str, str], summary: str) -> str:
@@ -254,8 +336,12 @@ async def lifespan(app: FastAPI):
     INSTRUCTIONS = build_instructions()
     oai = AsyncOpenAI(api_key=S.openai_api_key) if S.openai_api_key else None
     store.purge(S.retention_days)
+    task = asyncio.create_task(maintenance_loop())
     log.info("hanjisu up: enabled=%s model=%s telegram=%s", S.enabled, S.model, bool(S.telegram_token and S.telegram_chat_id))
-    yield
+    try:
+        yield
+    finally:
+        task.cancel()
 
 
 app = FastAPI(title="traum-chat", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
@@ -416,9 +502,7 @@ async def inquiry(body: InquiryIn, request: Request):
               "address": body.address.strip(), "phone": phone, "note": body.note.strip()}
     iid = store.add_inquiry(sid, "inquiry", fields)
     store.add_message(sid, "user", f"[접수 완료 {iid}] {fields['item']} / {fields['quantity']} / {fields['region']}")
-    ok = await telegram_send(format_inquiry(iid, "inquiry", fields, summarize(store.history(sid, 12))))
-    if ok:
-        store.mark_notified(iid)
+    ok = await notify_inquiry(iid, format_inquiry(iid, "inquiry", fields, summarize(store.history(sid, 12))))
     return {"ok": True, "id": iid, "notified": ok}
 
 
@@ -433,7 +517,5 @@ async def handoff(body: HandoffIn, request: Request):
     fields = {"phone": phone, "note": body.reason.strip()}
     iid = store.add_inquiry(sid, "handoff", fields)
     store.add_message(sid, "user", f"[담당자 연결 요청 {iid}]")
-    ok = await telegram_send(format_inquiry(iid, "handoff", fields, summarize(store.history(sid, 12))))
-    if ok:
-        store.mark_notified(iid)
+    ok = await notify_inquiry(iid, format_inquiry(iid, "handoff", fields, summarize(store.history(sid, 12))))
     return {"ok": True, "id": iid, "notified": ok}
