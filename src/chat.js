@@ -87,8 +87,10 @@
         const data = await r.json();
         card.classList.add('chat__card--done');
         card.innerHTML = '';
-        card.appendChild(el('h4', null, '접수되었습니다 · ' + data.id));
-        card.appendChild(el('small', null, '담당자가 ' + p + '로 연락드릴게요. 영업시간 외 접수는 다음 영업일에 연락드립니다.'));
+        card.appendChild(el('h4', null, (data.notified ? '접수되었습니다 · ' : '접수를 저장했어요 · ') + data.id));
+        card.appendChild(el('small', null, data.notified
+          ? '담당자가 ' + p + '로 연락드릴게요. 영업시간 외 접수는 다음 영업일에 연락드립니다.'
+          : '지금 담당자 알림이 지연되고 있어요. 접수는 저장돼 있고 자동으로 다시 전달되지만, 급하시면 ' + PHONE + '로 전화 주세요.'));
       } catch (e) {
         btn.disabled = false; btn.textContent = '접수하기';
         addMsg('bot', '접수가 잠시 안 되고 있어요. ' + PHONE + '로 전화 주시면 바로 접수해 드릴게요.');
@@ -117,10 +119,13 @@
           body: JSON.stringify({ session_id: sessionId, phone: p, reason: info.reason || '' }),
         });
         if (!r.ok) throw new Error('handoff ' + r.status);
+        const data = await r.json();
         card.classList.add('chat__card--done');
         card.innerHTML = '';
-        card.appendChild(el('h4', null, '연락 요청을 남겼어요'));
-        card.appendChild(el('small', null, '담당자가 ' + p + '로 연락드릴게요.'));
+        card.appendChild(el('h4', null, data.notified ? '연락 요청을 남겼어요' : '연락 요청을 저장했어요'));
+        card.appendChild(el('small', null, data.notified
+          ? '담당자가 ' + p + '로 연락드릴게요.'
+          : '지금 담당자 알림이 지연되고 있어요. 요청은 저장돼 있고 자동으로 다시 전달되지만, 급하시면 ' + PHONE + '로 전화 주세요.'));
       } catch (e) {
         btn.disabled = false;
         addMsg('bot', '요청이 잠시 안 되고 있어요. ' + PHONE + '로 전화 주세요.');
