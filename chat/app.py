@@ -159,6 +159,11 @@ class Store:
         keys = ("id", "session_id", "kind", "item", "quantity", "region", "address", "phone", "note")
         return [dict(zip(keys, r)) for r in rows]
 
+    def is_notified(self, iid: str) -> bool:
+        """재전송 순회가 각 행을 보내기 직전에 다시 확인한다(순회 시작 때 읽은 목록은 그 사이 바뀔 수 있다)."""
+        row = self.conn.execute("SELECT notified FROM inquiries WHERE id=?", (iid,)).fetchone()
+        return bool(row and row[0])
+
     def mark_notified(self, iid: str) -> None:
         self.conn.execute("UPDATE inquiries SET notified=1 WHERE id=?", (iid,))
         self.conn.commit()
@@ -257,11 +262,11 @@ def schedule_retry(delay_sec: float = 30.0) -> None:
 
 
 async def retry_unnotified() -> int:
-    """전송 실패로 남은 접수를 다시 보낸다. 잠금 안에서 목록을 새로 읽어 다른 순회·요청 경로와 겹쳐도 한 번만 보낸다."""
+    """전송 실패로 남은 접수를 다시 보낸다. 잠금 안에서 목록을 새로 읽고, 각 행은 보내기 직전에 전송 중·이미 전송됨을 다시 확인해 다른 순회·요청 경로와 겹쳐도 한 번만 보낸다."""
     sent = 0
     async with _resend_lock:
         for row in store.unnotified(S.notify_retry_days):
-            if row["id"] in _inflight:
+            if row["id"] in _inflight or store.is_notified(row["id"]):
                 continue
             summary = summarize(store.history(row["session_id"], 12))
             if await telegram_send(format_inquiry(row["id"], row["kind"], row, summary)):
